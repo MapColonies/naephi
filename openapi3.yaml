@@ -1,68 +1,27 @@
 openapi: 3.0.1
 info:
-  title: service-name
+  title: naephi
   description: basic template for map colonies service
   version: 1.0.0
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
 paths:
-  /anotherResource:
-    get:
-      operationId: getAnotherResource
-      tags:
-        - anotherResource
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/anotherResource'
-        400:
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
-  /resourceName:
-    get:
-      operationId: getResourceName
-      tags:
-        - resourceName
-      summary: gets the resource
-      responses:
-        200:
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/resource'
-        400:
-          description: Bad Request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/error'
+  /flow:
     post:
-      operationId: createResource
+      operationId: initiateFlow
       tags:
-        - resourceName
-      summary: creates a new record of type resource
+        - flow
+      summary: initiate a new processing flow
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/resource'
+              $ref: '#/components/schemas/flowRequest'
       responses:
-        201:
-          description: created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/resource'
+        202:
+          description: Accepted
         400:
           description: Bad Request
           content:
@@ -80,27 +39,31 @@ components:
       properties:
         message:
           type: string
-    resource:
+    flowRequest:
+      oneOf:
+        - $ref: '#/components/schemas/changesetFlowRequest'
+      discriminator:
+        propertyName: type
+        mapping:
+          changeset: '#/components/schemas/changesetFlowRequest'
+    baseFlow:
       type: object
       required:
-        - id
-        - name
-        - description
+        - type
       properties:
-        id:
-          type: number
-          format: int64
-        name:
+        type:
           type: string
-        description:
-          type: string
-    anotherResource:
-      type: object
-      required:
-        - kind
-        - isAlive
-      properties:
-        kind:
-          type: string
-        isAlive:
-          type: boolean
+          description: Identifies the specific flow logic to execute.
+    changesetFlowRequest:
+      allOf:
+        - $ref: '#/components/schemas/baseFlow'
+        - type: object
+          required:
+            - id
+          properties:
+            type:
+              type: string
+              enum: [changeset]
+            id:
+              type: string
+              format: uuid

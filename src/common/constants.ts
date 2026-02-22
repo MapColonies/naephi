@@ -12,5 +12,14 @@ export const SERVICES = {
   CONFIG: Symbol('Config'),
   TRACER: Symbol('Tracer'),
   METRICS: Symbol('METRICS'),
+  REDIS_WORKER_CONNECTION: Symbol('RedisWorkerConnection'),
+  REDIS_QUEUE_CONNECTION: Symbol('RedisQueueConnection'),
+  CLEANUP_REGISTRY: Symbol('CleanupRegistry'),
 } satisfies Record<string, symbol>;
 /* eslint-enable @typescript-eslint/naming-convention */
+
+export const ON_SIGNAL = Symbol('onSignal');
+
+export const HEALTHCHECK = Symbol('healthcheck');
+
+export const MS_IN_SECOND = 1000;

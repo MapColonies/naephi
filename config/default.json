@@ -29,5 +29,21 @@
         "options": null
       }
     }
+  },
+  "app": {
+    "uiPath": "/ui"
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "username": "",
+    "password": "",
+    "enableSslAuth": false,
+    "sslPaths": {
+      "ca": "",
+      "key": "",
+      "cert": ""
+    },
+    "db": 0
   }
 }

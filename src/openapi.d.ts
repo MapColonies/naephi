@@ -4,35 +4,17 @@
 
 import type { TypedRequestHandlers as ImportedTypedRequestHandlers } from '@map-colonies/openapi-helpers/typedRequestHandler';
 export type paths = {
-  '/anotherResource': {
+  '/flow': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    /** gets the resource */
-    get: operations['getAnotherResource'];
+    get?: never;
     put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/resourceName': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** gets the resource */
-    get: operations['getResourceName'];
-    put?: never;
-    /** creates a new record of type resource */
-    post: operations['createResource'];
+    /** initiate a new processing flow */
+    post: operations['initiateFlow'];
     delete?: never;
     options?: never;
     head?: never;
@@ -46,15 +28,22 @@ export type components = {
     error: {
       message: string;
     };
-    resource: {
-      /** Format: int64 */
-      id: number;
-      name: string;
-      description: string;
+    flowRequest: components['schemas']['changesetFlowRequest'];
+    baseFlow: {
+      /** @description Identifies the specific flow logic to execute. */
+      type: string;
     };
-    anotherResource: {
-      kind: string;
-      isAlive: boolean;
+    changesetFlowRequest: components['schemas']['baseFlow'] & {
+      /** @enum {string} */
+      type?: 'changeset';
+      /** Format: uuid */
+      id: string;
+    } & {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      type: 'changeset';
     };
   };
   responses: never;
@@ -65,65 +54,7 @@ export type components = {
 };
 export type $defs = Record<string, never>;
 export interface operations {
-  getAnotherResource: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['anotherResource'];
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['error'];
-        };
-      };
-    };
-  };
-  getResourceName: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['resource'];
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': components['schemas']['error'];
-        };
-      };
-    };
-  };
-  createResource: {
+  initiateFlow: {
     parameters: {
       query?: never;
       header?: never;
@@ -132,18 +63,16 @@ export interface operations {
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['resource'];
+        'application/json': components['schemas']['flowRequest'];
       };
     };
     responses: {
-      /** @description created */
-      201: {
+      /** @description Accepted */
+      202: {
         headers: {
           [name: string]: unknown;
         };
-        content: {
-          'application/json': components['schemas']['resource'];
-        };
+        content?: never;
       };
       /** @description Bad Request */
       400: {

@@ -1,15 +1,9 @@
-# Map Colonies typescript service template
-
-----------------------------------
-
-This is a basic repo template for building new MapColonies web services in Typescript.
-
-> [!IMPORTANT]
-> To regenerate the types on openapi change run the command `npm run generate:openapi-types`.
-
-> [!WARNING]
-> After creating a new repo based on this template, you should delete the CODEOWNERS file.
-
+# naephi
+- nae: Scottish English or Northern English for no or not
+- phi ( Φ, φ ):
+    1. a plane angle.
+    2. a polar coordinate.
+    3. in mathematics, the Greek letter φ denotes the golden ratio.
 
 ## Development
 When in development you should use the command `npm run start:dev`. The main benefits are that it enables offline mode for the config package, and source map support for NodeJS errors.

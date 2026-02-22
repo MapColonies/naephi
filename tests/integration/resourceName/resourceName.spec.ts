@@ -32,7 +32,7 @@ describe('resourceName', function () {
 
       expect(response.status).toBe(httpStatusCodes.OK);
 
-      const resource = response.body as paths['/resourceName']['get']['responses'][200]['content']['application/json'];
+      const resource = response.body;
 
       expect(response).toSatisfyApiSpec();
       expect(resource.id).toBe(1);
