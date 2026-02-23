@@ -1,8 +1,3 @@
-export interface IChangeMergerClient {
-  merge: (req: MergeRequest) => Promise<unknown>;
-  interpret: (changesetId: number, remote: Remote, options?: { action?: Action[]; lookupTags?: string[] }) => Promise<InterpretResult>;
-}
-
 export type OsmElementType = 'node' | 'way' | 'relation';
 export type Action = 'create' | 'modify' | 'delete';
 export type Remote = 'api' | 'replication';
@@ -49,4 +44,21 @@ export interface InterpretResult {
   created?: InterpretedMapping[];
   modified?: InterpretedMapping[];
   deleted?: InterpretedMapping[];
+}
+
+export interface IChangeMerger {
+  /**
+   * POST /change/merge
+   *
+   * Merges an array of changes into an osm change
+   * @returns Osm changeset ready for upload
+   */
+  merge: (request: MergeRequest) => Promise<unknown>;
+  /**
+   * GET /change/{changesetId}/interpret
+   *
+   * Interprets a remote changeset according to options
+   * @returns Changeset interpretation
+   */
+  interpret: (changesetId: number, remote: Remote, options?: { action?: Action[]; lookupTags?: string[] }) => Promise<InterpretResult>;
 }

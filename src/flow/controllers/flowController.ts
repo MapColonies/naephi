@@ -16,13 +16,7 @@ export class FlowController {
     const { type, ...payload } = req.body;
 
     try {
-      switch (type) {
-        case 'changeset':
-          await this.manager.initChangesetFlow(payload);
-          break;
-        default:
-          throw new Error(`unsupported flow type: ${type}`);
-      }
+      await this.manager.initChangesetFlow(payload);
 
       return res.status(httpStatus.ACCEPTED).send();
     } catch (error) {

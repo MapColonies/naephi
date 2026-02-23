@@ -2,7 +2,7 @@ import { Counter, Histogram, Registry } from 'prom-client';
 import { Job, Worker, WorkerOptions } from 'bullmq';
 import ioRedis from 'ioredis';
 import { snakeCase } from 'change-case';
-import { MS_IN_SECOND } from '@src/common/constants';
+import { MS_IN_SECOND, SERVICE_NAME } from '@src/common/constants';
 import { ILogger } from '@src/common/interfaces';
 import { WorkerProviderOptions } from '../options';
 import { QueueEnum, QUEUE_KEY_PREFIX } from '../constants';
@@ -28,20 +28,20 @@ export abstract class BullWorkerProvider<DataType = unknown, ReturnType = unknow
 
     if (this.metricsRegistry !== undefined) {
       this.porcessingHistogram = new Histogram({
-        name: `naephi_${snakeCase(this.queueName)}_job_processing_duration_seconds`,
-        help: 'Naephi processing duration',
+        name: `${SERVICE_NAME}_${snakeCase(this.queueName)}_job_processing_duration_seconds`,
+        help: `Job processing duration`,
         registers: [this.metricsRegistry],
       });
 
       this.jobCounter = new Counter({
-        name: `naephi_${snakeCase(this.queueName)}_job_count`,
-        help: 'Naephi job processing counter by resulted event',
+        name: `${SERVICE_NAME}_${snakeCase(this.queueName)}_job_count`,
+        help: 'Job processing counter by resulted event',
         labelNames: ['status'] as const,
         registers: [this.metricsRegistry],
       });
 
       this.internalErrorCounter = new Counter({
-        name: `naephi_${snakeCase(this.queueName)}_internal_error_total`,
+        name: `${SERVICE_NAME}_${snakeCase(this.queueName)}_internal_error_total`,
         help: 'The total number of internal errors occured while job processing',
         registers: [this.metricsRegistry],
       });

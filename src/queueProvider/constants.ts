@@ -14,7 +14,7 @@ export enum WorkerEnum {
   CHANGESET_CLOSURE_REQUEST = 'changeset-closure-request-worker',
 }
 
-export const QUEUE_KEY_PREFIX = '{naephi}';
+export const QUEUE_KEY_PREFIX = '{naephi}'; //TODO: make configurable
 
 export const REDIS_CONNECTION_OPTIONS_SYMBOL = Symbol('RedisConntionOptions');
 

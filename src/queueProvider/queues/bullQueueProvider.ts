@@ -3,6 +3,7 @@ import { JobsOptions, Queue } from 'bullmq';
 import { Counter, Gauge, Registry } from 'prom-client';
 import { snakeCase } from 'change-case';
 import { ILogger } from '@src/common/interfaces';
+import { SERVICE_NAME } from '@src/common/constants';
 import { JOB_STATES } from '../constants';
 import { type QueueOptions } from '../options';
 import { BulkJobsOptions, JobQueueProvider } from './interfaces';
@@ -29,7 +30,7 @@ export class BullQueueProvider<T = unknown> implements JobQueueProvider<T> {
       // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
       new Gauge({
-        name: `naephi_${snakeCase(this.queueName)}_state_counts`,
+        name: `${SERVICE_NAME}_${snakeCase(this.queueName)}_state_counts`,
         help: 'The number of current jobs in different states in the queue',
         labelNames: ['state'] as const,
         async collect(): Promise<void> {
@@ -40,7 +41,7 @@ export class BullQueueProvider<T = unknown> implements JobQueueProvider<T> {
       });
 
       this.addedCounter = new Counter({
-        name: `naephi_${snakeCase(this.queueName)}_total_added`,
+        name: `${SERVICE_NAME}_${snakeCase(this.queueName)}_total_added`,
         help: 'The total number of added jobs by kind of addition',
         labelNames: ['kind'] as const,
         registers: [this.metricsRegistry],
@@ -66,7 +67,7 @@ export class BullQueueProvider<T = unknown> implements JobQueueProvider<T> {
   }
 
   public async addBulk(jobs: T[], options?: BulkJobsOptions): Promise<void> {
-    this.logger.info({ msg: 'adding a bulk of jobs to queue', queueName: this.queueName, amount: jobs.length, options });
+    this.logger.info({ msg: 'adding a bulk of jobs to queue', queueName: this.queueName, count: jobs.length, options });
 
     if (jobs.length === 0) {
       return;
