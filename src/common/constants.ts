@@ -11,10 +11,16 @@ export const SERVICES = {
   LOGGER: Symbol('Logger'),
   CONFIG: Symbol('Config'),
   TRACER: Symbol('Tracer'),
-  METRICS: Symbol('METRICS'),
+  METRICS: Symbol('Metrics'),
+  REDIS_CLIENT: Symbol('Redis'),
   REDIS_WORKER_CONNECTION: Symbol('RedisWorkerConnection'),
   REDIS_QUEUE_CONNECTION: Symbol('RedisQueueConnection'),
   CLEANUP_REGISTRY: Symbol('CleanupRegistry'),
+  APP_CONFIG: Symbol('AppConfig'),
+  OSM_API_CLIENT: Symbol('OsmApi'),
+  OSM_SYNC_TRACKER_CLIENT: Symbol('OsmSyncTracker'),
+  ID_TO_OSM_CLIENT: Symbol('IdToOsm'),
+  CHANGE_MERGER_CLIENT: Symbol('ChangeMerger'),
 } satisfies Record<string, symbol>;
 /* eslint-enable @typescript-eslint/naming-convention */
 

@@ -1,3 +1,4 @@
+import { WorkerOptions } from 'bullmq';
 import { RedisOptions } from 'ioredis';
 
 interface LogFn {
@@ -19,7 +20,7 @@ export interface ILogger {
   fatal?: LogFn;
 }
 
-export type RedisConfig = {
+export type ExtendedRedisOptions = {
   host: string;
   port: number;
   enableSslAuth: boolean;
@@ -28,4 +29,5 @@ export type RedisConfig = {
 
 export interface AppConfig {
   uiPath: string;
+  workerOptions: WorkerOptions;
 }

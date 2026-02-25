@@ -47,7 +47,6 @@ export class BullFlowProducerProvider implements FlowProducerProvider {
 
     this.addedCounter?.inc();
 
-    console.log(tree);
     return tree;
   }
 }

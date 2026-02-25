@@ -1,19 +1,21 @@
+import { injectable } from 'tsyringe';
 import { stringify } from 'qs';
 import { BaseClient } from '../baseClient';
-import { ClientConfig } from '../options';
-import { Action, IChangeMerger, InterpretResult, MergeRequest, Remote } from './types';
+import type { ClientConfig } from '../options';
+import { Action, IChangeMerger, InterpretResult, MergeRequest, MergeResponse, Remote } from './types';
 
+@injectable()
 export class ChangeMergerClient extends BaseClient implements IChangeMerger {
   public constructor(clientConfig: ClientConfig) {
     super(clientConfig);
   }
 
-  public async merge(request: MergeRequest): Promise<unknown> {
+  public async merge(request: MergeRequest): Promise<MergeResponse> {
     const metadata = { changesetId: request.changesetId, changesCount: request.changes.length };
     this.logger?.info({ msg: 'executing change merge request', ...metadata });
 
     try {
-      const response = await this.httpClient.post('/change/merge', request);
+      const response = await this.httpClient.post<MergeResponse>('/change/merge', request);
       return response.data;
     } catch (error) {
       this.logError({ err: error, msg: 'failed to merge change request', metadata });

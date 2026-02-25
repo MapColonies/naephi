@@ -1,13 +1,15 @@
+import { injectable } from 'tsyringe';
 import { BaseClient } from '../baseClient';
-import { ClientConfig } from '../options';
-import { Changeset, ChangesetPatchRequest, EntityPatchRequest, IOsmSyncTracker } from './types';
+import type { ClientConfig } from '../options';
+import { Changeset, ChangesetPatchRequest, PatchEntitiesRequest, IOsmSyncTracker } from './types';
 
+@injectable()
 export class OsmSyncTrackerClient extends BaseClient implements IOsmSyncTracker {
   public constructor(clientConfig: ClientConfig) {
     super(clientConfig);
   }
 
-  public async patchEntities(request: EntityPatchRequest): Promise<void> {
+  public async patchEntities(request: PatchEntitiesRequest): Promise<void> {
     const metadata = { entityCount: request.length };
     this.logger?.info({ msg: 'executing entity patching', ...metadata });
 
@@ -19,7 +21,7 @@ export class OsmSyncTrackerClient extends BaseClient implements IOsmSyncTracker 
     }
   }
 
-  public async createChangeset(request: Changeset): Promise<void> {
+  public async postChangeset(request: Changeset): Promise<void> {
     this.logger?.info({ msg: 'executing changeset creation', request });
 
     try {
@@ -30,7 +32,7 @@ export class OsmSyncTrackerClient extends BaseClient implements IOsmSyncTracker 
     }
   }
 
-  public async updateChangeset(changesetId: string, request: ChangesetPatchRequest): Promise<void> {
+  public async patchChangeset(changesetId: string, request: ChangesetPatchRequest): Promise<void> {
     this.logger?.info({ msg: 'executing changeset update', changesetId, request });
 
     try {
@@ -52,7 +54,7 @@ export class OsmSyncTrackerClient extends BaseClient implements IOsmSyncTracker 
     }
   }
 
-  public async createChangesetClosureJobs(changesetIds: string[]): Promise<void> {
+  public async postChangesetClosureJobs(changesetIds: string[]): Promise<void> {
     const metadata = { countChangesets: changesetIds.length };
     this.logger?.info({ msg: 'executing changeset closure jobs creation', metadata });
 

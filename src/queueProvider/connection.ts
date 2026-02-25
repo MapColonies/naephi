@@ -4,7 +4,7 @@ import ioRedis, { RedisOptions } from 'ioredis';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { ConfigType } from '../common/config';
 import { SERVICES } from '../common/constants';
-import { RedisConfig } from '../common/interfaces';
+import { ExtendedRedisOptions } from '../common/interfaces';
 import { CONSTANT_BULLMQ_QUEUE_CONNECTION_OPTIONS, CONSTANT_BULLMQ_WORKER_CONNECTION_OPTIONS, REDIS_CONNECTION_OPTIONS_SYMBOL } from './constants';
 
 const RETRY_CONNECTION_DELAY = 1000;
@@ -26,7 +26,7 @@ const redisQuitSafely = async (redis: ioRedis): Promise<void> => {
   }
 };
 
-export const constructConnectionOptions = (redisConfig: RedisConfig): RedisOptions => {
+export const constructConnectionOptions = (redisConfig: ExtendedRedisOptions): RedisOptions => {
   const { host, port, enableSslAuth, sslPaths, ...clientOptions } = redisConfig;
 
   const connectionOptions: RedisOptions = {
@@ -57,7 +57,7 @@ export const constructConnectionOptions = (redisConfig: RedisConfig): RedisOptio
 
 export const createConnectionOptionsFactory: FactoryFunction<RedisOptions> = (container) => {
   const config = container.resolve<ConfigType>(SERVICES.CONFIG);
-  const redisConfig = config.get('redis') as RedisConfig;
+  const redisConfig = config.get('redis') as ExtendedRedisOptions;
   return constructConnectionOptions(redisConfig);
 };
 

@@ -11,7 +11,7 @@ export interface Entity {
   failReason?: string;
 }
 
-export type EntityPatchRequest = Entity[];
+export type PatchEntitiesRequest = Entity[];
 
 export interface Changeset {
   changesetId: string;
@@ -26,19 +26,19 @@ export interface IOsmSyncTracker {
    *
    * Edits multiple entities in a bulk operation
    */
-  patchEntities: (request: EntityPatchRequest) => Promise<void>;
+  patchEntities: (request: PatchEntitiesRequest) => Promise<void>;
   /**
    * POST /changeset
    *
    * Creates a new changeset
    */
-  createChangeset: (request: Changeset) => Promise<void>;
+  postChangeset: (request: Changeset) => Promise<void>;
   /**
    * PATCH /changeset/{changesetId}
    *
    * Updates an existing changeset
    */
-  updateChangeset: (changesetId: string, request: ChangesetPatchRequest) => Promise<void>;
+  patchChangeset: (changesetId: string, request: ChangesetPatchRequest) => Promise<void>;
   /**
    * PATCH /changeset/{changesetId}/entities
    *
@@ -50,5 +50,5 @@ export interface IOsmSyncTracker {
    *
    * Creates closure jobs for a the given of changesets
    */
-  createChangesetClosureJobs: (changesetIds: string[]) => Promise<void>;
+  postChangesetClosureJobs: (changesetIds: string[]) => Promise<void>;
 }

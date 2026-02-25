@@ -26,11 +26,18 @@ export interface OsmChange {
 export interface MergeRequest {
   changesetId: number;
   changes: {
-    externalId: string;
     action: Action;
     change: OsmChange;
+    externalId: string;
+    fileId: string;
     tempOsmId?: number;
   }[];
+}
+
+export interface MergeResponse {
+  change: string;
+  created: { externalId: string; tempOsmId: number }[];
+  deleted: string[];
 }
 
 export interface InterpretedMapping {
@@ -53,7 +60,7 @@ export interface IChangeMerger {
    * Merges an array of changes into an osm change
    * @returns Osm changeset ready for upload
    */
-  merge: (request: MergeRequest) => Promise<unknown>;
+  merge: (request: MergeRequest) => Promise<MergeResponse>;
   /**
    * GET /change/{changesetId}/interpret
    *

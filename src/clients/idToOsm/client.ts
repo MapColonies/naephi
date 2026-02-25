@@ -1,10 +1,12 @@
 import { isAxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
+import { injectable } from 'tsyringe';
 import { BaseClient } from '../baseClient';
-import { ClientConfig } from '../options';
+import type { ClientConfig } from '../options';
 import { EntityBulkRequest, IIdToOsm } from './types';
 import { IdAlreadyExistsError } from './errors';
 
+@injectable()
 export class IdToOsmClient extends BaseClient implements IIdToOsm {
   public constructor(clientConfig: ClientConfig) {
     super(clientConfig);

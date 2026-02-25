@@ -1,11 +1,13 @@
 import { isAxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
+import { injectable } from 'tsyringe';
 import { SERVICE_NAME } from '@src/common/constants';
 import { BaseClient } from '../baseClient';
-import { ClientConfig } from '../options';
+import type { ClientConfig } from '../options';
 import { ChangesetCreateRequest, IOsmAPI, OsmChangesetResponse } from './types';
 import { ChangesetAlreadyClosedError, ChangesetCloseConflictError, ChangesetNotFoundError, ChangesetContentConflictError } from './errors';
 
+@injectable()
 export class OsmAPI extends BaseClient implements IOsmAPI {
   public constructor(clientConfig: ClientConfig) {
     super(clientConfig);
