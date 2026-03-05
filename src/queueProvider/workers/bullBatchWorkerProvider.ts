@@ -27,5 +27,9 @@ export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWo
     this.setupEventListenerts();
   }
 
+  protected async processJob(job: Job<DataType, void>): Promise<void> {
+    throw new Error('processJob called on a BatchWorker. processBatch should be used instead.');
+  }
+
   protected abstract processBatch(jobs: Job<DataType, void>[]): Promise<void>;
 }

@@ -57,4 +57,27 @@ export class RedisClient {
       throw error;
     }
   }
+
+  public async deleteBatch(keys: string[]): Promise<void> {
+    if (keys.length === 0) {
+      return;
+    }
+
+    this.logger?.info({ msg: 'executing redis batch del command', count: keys.length, keys });
+
+    try {
+      await this.client.del(...keys);
+
+      this.commandsCounter?.inc({ command: 'delete', status: 'success' }, keys.length);
+    } catch (error) {
+      this.commandsCounter?.inc({ command: 'delete', status: 'failed' }, keys.length);
+      this.logger?.error({
+        msg: 'failed to batch delete from redis',
+        count: keys.length,
+        keys,
+        err: error,
+      });
+      throw error;
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { BaseError } from '../error';
 
-export class IdAlreadyExistsError extends BaseError {
+export class IdConflictError extends BaseError {
   public constructor(message: string) {
     super(message);
   }

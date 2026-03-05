@@ -28,6 +28,12 @@ export interface IOsmSyncTracker {
    */
   patchEntities: (request: PatchEntitiesRequest) => Promise<void>;
   /**
+   * GET /changeset/{changesetId}
+   *
+   * Fetch a changeset by id
+   */
+  getChangeset: (changesetId: string) => Promise<Changeset | null>;
+  /**
    * POST /changeset
    *
    * Creates a new changeset

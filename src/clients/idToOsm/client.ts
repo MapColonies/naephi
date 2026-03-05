@@ -4,7 +4,7 @@ import { injectable } from 'tsyringe';
 import { BaseClient } from '../baseClient';
 import type { ClientConfig } from '../options';
 import { EntityBulkRequest, IIdToOsm } from './types';
-import { IdAlreadyExistsError } from './errors';
+import { IdConflictError } from './errors';
 
 @injectable()
 export class IdToOsmClient extends BaseClient implements IIdToOsm {
@@ -23,7 +23,7 @@ export class IdToOsmClient extends BaseClient implements IIdToOsm {
 
       if (isAxiosError(error)) {
         if (error.response?.status === StatusCodes.UNPROCESSABLE_ENTITY) {
-          throw new IdAlreadyExistsError('externalId for creation already exists with different osmId');
+          throw new IdConflictError('externalId for creation already exists with different osmId');
         }
       }
 

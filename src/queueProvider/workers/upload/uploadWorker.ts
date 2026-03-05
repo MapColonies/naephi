@@ -2,17 +2,35 @@ import ioRedis from 'ioredis';
 import { injectable, inject } from 'tsyringe';
 import { type Logger } from '@map-colonies/js-logger';
 import { Registry } from 'prom-client';
-import { Job } from 'bullmq';
+import { Job, UnrecoverableError } from 'bullmq';
 import { type AppConfig } from '@src/common/interfaces';
-import type { IOsmAPI } from '@src/clients/osmAPI/types';
+import { ChangesetStatus, type IOsmAPI } from '@src/clients/osmAPI/types';
 import type { IOsmSyncTracker } from '@src/clients/osmSyncTracker/types';
 import { SERVICES } from '@src/common/constants';
 import type { IChangeMerger, MergeRequest } from '@src/clients/changeMerger/types';
 import { RedisClient } from '@src/redis/client';
-import { attemptSafely } from '@src/common/util';
+import type { JobQueueProvider } from '@src/queueProvider/queues/interfaces';
+import { determineChangesetStatus } from '@src/clients/osmAPI/helpers';
+import { FlowManager } from '@src/flow/models/flowManager';
+import {
+  ChangesetAlreadyClosedError,
+  ChangesetContentConflictError,
+  ChangesetElementGoneError,
+  ChangesetNotFoundError,
+  ChangesetPayloadError,
+  ChangesetPreconditionError,
+  ChangesetTooLargeError,
+} from '@src/clients/osmAPI/errors';
 import { QueueEnum, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
-import { ChangesetUploadData, ChangesetUploadReturn } from './types';
+import { ChangesetUploadData, ChangesetUploadReturn, CompleteChangesetIdentifiers } from './types';
+
+interface ChangesetContext {
+  changesetId: string;
+  changesetOsmId: number;
+  status: ChangesetStatus;
+  flowAttempt: number;
+}
 
 @injectable()
 export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, ChangesetUploadReturn> {
@@ -24,7 +42,10 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
     @inject(RedisClient) private readonly redis: RedisClient,
     @inject(SERVICES.OSM_API_CLIENT) private readonly osmApi: IOsmAPI,
     @inject(SERVICES.OSM_SYNC_TRACKER_CLIENT) private readonly tracker: IOsmSyncTracker,
-    @inject(SERVICES.CHANGE_MERGER_CLIENT) private readonly changeMerger: IChangeMerger
+    @inject(SERVICES.CHANGE_MERGER_CLIENT) private readonly changeMerger: IChangeMerger,
+    @inject(QueueEnum.CHANGESET_REDIS_CLEANUP) private readonly redisCleanupQueue: JobQueueProvider<CompleteChangesetIdentifiers>,
+    @inject(QueueEnum.CHANGESET_OSM_CLEANUP) private readonly osmCleanupQueue: JobQueueProvider<CompleteChangesetIdentifiers>,
+    @inject(FlowManager) private readonly flowManager: FlowManager
   ) {
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_UPLOAD });
     const { workerOptions } = appConfig;
@@ -38,44 +59,114 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
   }
 
   protected async processJob(job: Job<ChangesetUploadData>): Promise<ChangesetUploadReturn> {
-    const { changesetId } = job.data;
+    const { changesetId, flowAttempt } = job.data;
 
-    this.logger.info({ msg: 'started job processing', queueName: this.queueName, jobId: job.id, jobName: job.name, changesetId });
+    this.logger.info({ msg: 'started job processing', queueName: this.queueName, jobId: job.id, jobName: job.name, changesetId, flowAttempt });
 
     const childrenValues = await job.getChildrenValues();
     const { osmId: changesetOsmId } = childrenValues[`${changesetId}-pre-upload`] as ChangesetUploadReturn;
 
     // 1. osm-api::GET /changeset/{changesetId}.json
-    const changeset = await this.osmApi.getChangeset(changesetOsmId);
+    const status = await this.getChangesetStatus(changesetOsmId);
 
-    if (!changeset.changeset.open || changeset.changeset.changes_count > 0) {
-      throw new Error(); // TODO: branch out and handle
+    const context: ChangesetContext = { changesetId, changesetOsmId, status, flowAttempt };
+
+    switch (status) {
+      case ChangesetStatus.OPEN_AND_EMPTY:
+        // 2. redis::GET {changesetId}
+        const mergeRequest = await this.redis.get<MergeRequest>(changesetId);
+
+        if (mergeRequest === null) {
+          this.logger.error({ msg: 'could not find asset in redis, job is unrecoverable', changesetId, flowAttempt });
+          throw new UnrecoverableError(`changes for changeset ${changesetId} not found in redis`);
+        }
+
+        // 3. change-merger::POST /change/merge
+        const { change } = await this.changeMerger.merge({ ...mergeRequest, changesetId: changesetOsmId });
+
+        try {
+          // 4. osm-api::POST /changeset/{changesetId}/upload
+          await this.osmApi.uploadChangeset(changesetOsmId, change);
+        } catch (error) {
+          if (
+            error instanceof ChangesetPayloadError ||
+            error instanceof ChangesetNotFoundError ||
+            error instanceof ChangesetContentConflictError ||
+            error instanceof ChangesetElementGoneError ||
+            error instanceof ChangesetPreconditionError ||
+            error instanceof ChangesetTooLargeError
+          ) {
+            this.logger.error({ msg: 'could not upload changeset to osm due to unrecoverable error, job is unrecoverable', context, err: error });
+            throw new UnrecoverableError(error.message);
+          }
+
+          if (error instanceof ChangesetAlreadyClosedError) {
+            const status = await this.getChangesetStatus(changesetOsmId);
+
+            if (status === ChangesetStatus.CLOSED_AND_FULL) {
+              this.handleFullChangeset(context);
+              break;
+            }
+
+            if (status === ChangesetStatus.CLOSED_AND_EMPTY) {
+              await this.handleClosedAndEmptyChangeset(context);
+            }
+          }
+
+          throw error;
+        }
+        break;
+      case ChangesetStatus.OPEN_AND_FULL:
+      case ChangesetStatus.CLOSED_AND_FULL:
+        this.handleFullChangeset(context);
+        break;
+      case ChangesetStatus.CLOSED_AND_EMPTY:
+        this.handleClosedAndEmptyChangeset(context);
+        break;
     }
 
-    // 2. redis::GET {changesetId}
-    const mergeRequest = await this.redis.get<MergeRequest>(changesetId);
-    if (mergeRequest === null) {
-      throw new Error(`changes for changeset ${changesetId} not found in redis`); // TODO: handle error
-    }
-
-    // 3. change-merger::POST /change/merge
-    const { change } = await this.changeMerger.merge({ ...mergeRequest, changesetId: changesetOsmId });
-
-    try {
-      // 4. osm-api::POST /changeset/{changesetId}/upload
-      await this.osmApi.uploadDiff(changesetOsmId, change);
-    } catch (error) {
-      // TODO: handle different erroring branches
-      this.logger.info({ err: error });
-      throw error;
-    }
-
-    // 5. osm-api::PUT /changeset/{changesetId}/close
-    await attemptSafely(async () => this.osmApi.closeChangeset(changesetOsmId));
-
-    // TODO: should push a new cleanup job (which will be handled by a batchWorker)
-    await attemptSafely(async () => this.redis.delete(changesetId));
+    // 5. publish cleanup jobs
+    await this.publishCleanupJobs(context);
 
     return { changesetId, osmId: changesetOsmId };
+  }
+
+  private async getChangesetStatus(changesetOsmId: number): Promise<ChangesetStatus> {
+    const changeset = await this.osmApi.getChangeset(changesetOsmId);
+    const status = determineChangesetStatus(changeset);
+    return status;
+  }
+
+  private handleFullChangeset(context: ChangesetContext): void {
+    this.logger.info({ msg: 'changeset is closed and full, upload can be skipped', context });
+  }
+
+  private async handleClosedAndEmptyChangeset(context: ChangesetContext): Promise<never> {
+    this.logger.warn({
+      msg: 'changeset is closed and empty, another flow should be attempted while this flow is terminated',
+      context,
+    });
+
+    await this.flowManager.initChangesetFlow({
+      id: context.changesetId,
+      flowAttempt: (context.flowAttempt ?? 1) + 1,
+    });
+
+    throw new UnrecoverableError('flow is terminated, while another flow is attempted');
+  }
+
+  private async publishCleanupJobs(context: ChangesetContext): Promise<void> {
+    const { changesetId, changesetOsmId } = context;
+
+    this.logger.info({ msg: 'attempting to create cleanup jobs', context });
+
+    try {
+      await Promise.all([
+        this.redisCleanupQueue.add(`${changesetId}-redis-cleanup`, { changesetId, osmId: changesetOsmId }, { jobId: `${changesetId}-redis-cleanup` }),
+        this.osmCleanupQueue.add(`${changesetId}-osm-cleanup`, { changesetId, osmId: changesetOsmId }, { jobId: `${changesetId}-osm-cleanup` }),
+      ]);
+    } catch (error) {
+      this.logger.error({ msg: 'failed to create one or more cleanup jobs', context, err: error });
+    }
   }
 }

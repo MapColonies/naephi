@@ -27,7 +27,7 @@ const registerBullDeps = (): InjectionObject<unknown>[] => {
     QueueEnum.CHANGESET_PRE_UPLOAD,
     QueueEnum.CHANGESET_UPLOAD,
     QueueEnum.CHANGESET_POST_UPLOAD,
-    QueueEnum.CHANGESET_CLOSURE_REQUEST,
+    QueueEnum.CHANGESET_CLOSURE,
   ].map((queueName) => ({
     token: queueName,
     provider: {

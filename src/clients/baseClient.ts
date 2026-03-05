@@ -2,7 +2,12 @@ import axios, { AxiosInstance, isAxiosError } from 'axios';
 import axiosRetry, { exponentialDelay, IAxiosRetryConfig } from 'axios-retry';
 import { ILogger } from '@src/common/interfaces';
 import { ClientConfig, ClientOptions, DEFAULT_RETRY_STRATEGY_DELAY, RetryStrategy } from './options';
-import { ErrorContext } from './error';
+
+interface ErrorContext {
+  err: unknown;
+  msg: string;
+  metadata?: Record<string, unknown>;
+}
 
 export abstract class BaseClient {
   protected readonly logger: ILogger | undefined;

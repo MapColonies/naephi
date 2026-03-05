@@ -1,13 +1,10 @@
-export interface ErrorContext {
-  err: unknown;
-  msg: string;
-  metadata?: Record<string, unknown>;
-}
-
 export abstract class BaseError extends Error {
-  public constructor(message: string) {
+  public readonly context?: Record<string, unknown>;
+
+  public constructor(message: string, context?: Record<string, unknown>) {
     super(message);
     Object.setPrototypeOf(this, new.target.prototype);
     this.name = new.target.name;
+    this.context = context;
   }
 }

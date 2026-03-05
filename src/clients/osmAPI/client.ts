@@ -5,7 +5,16 @@ import { SERVICE_NAME } from '@src/common/constants';
 import { BaseClient } from '../baseClient';
 import type { ClientConfig } from '../options';
 import { ChangesetCreateRequest, IOsmAPI, OsmChangesetResponse } from './types';
-import { ChangesetAlreadyClosedError, ChangesetCloseConflictError, ChangesetNotFoundError, ChangesetContentConflictError } from './errors';
+import {
+  ChangesetAlreadyClosedError,
+  ChangesetCloseConflictError,
+  ChangesetNotFoundError,
+  ChangesetContentConflictError,
+  ChangesetPayloadError,
+  ChangesetTooLargeError,
+  ChangesetElementGoneError,
+  ChangesetPreconditionError,
+} from './errors';
 
 @injectable()
 export class OsmAPI extends BaseClient implements IOsmAPI {
@@ -27,7 +36,7 @@ export class OsmAPI extends BaseClient implements IOsmAPI {
       const changesetId = parseInt(response.data, 10);
 
       if (isNaN(changesetId)) {
-        throw new Error(`Invalid response from OSM API: ${response.data}`); //TODO: create custom error
+        throw new Error(`Invalid response from OSM API: ${response.data}`);
       }
 
       return changesetId;
@@ -50,8 +59,8 @@ export class OsmAPI extends BaseClient implements IOsmAPI {
     }
   }
 
-  public async uploadDiff(changesetId: number, osmChangeXml: string): Promise<void> {
-    this.logger?.info({ msg: 'executing osm upload diff', changesetId });
+  public async uploadChangeset(changesetId: number, osmChangeXml: string): Promise<void> {
+    this.logger?.info({ msg: 'executing osm changeset upload', changesetId });
 
     try {
       await this.httpClient.post<unknown>(`/api/0.6/changeset/${changesetId}/upload`, osmChangeXml, {
@@ -61,27 +70,37 @@ export class OsmAPI extends BaseClient implements IOsmAPI {
     } catch (error) {
       this.logError({ err: error, msg: 'failed changeset upload', metadata: { changesetId } });
 
-      // TODO: handle errors
       if (isAxiosError(error) && error.response?.status !== undefined) {
-        switch (error.response.status) {
-          case 400:
-            throw new Error(`Bad Request`);
+        const status = error.response.status;
+        const responseBody = typeof error.response.data === 'string' ? error.response.data : 'request failed';
 
-          case 404:
-            throw new ChangesetNotFoundError(changesetId);
+        switch (status) {
+          case StatusCodes.BAD_REQUEST:
+            throw new ChangesetPayloadError(changesetId, responseBody);
 
-          case 409:
-            // Conflict: Changeset closed, or version mismatch
-            if ((error.response.data as string).includes('closed')) {
-              throw new ChangesetAlreadyClosedError(changesetId);
+          case StatusCodes.NOT_FOUND:
+            throw new ChangesetNotFoundError(changesetId, responseBody);
+
+          case StatusCodes.CONFLICT:
+            if (responseBody.includes('closed at')) {
+              throw new ChangesetAlreadyClosedError(changesetId, responseBody);
             }
-            throw new ChangesetContentConflictError(changesetId);
+            throw new ChangesetContentConflictError(changesetId, responseBody);
 
-          case 413:
-            // Payload too large (OSM limit is usually 50k elements)
-            throw new Error(`Diff upload too large for OSM`);
+          case StatusCodes.GONE:
+            throw new ChangesetElementGoneError(changesetId, responseBody);
+
+          case StatusCodes.PRECONDITION_FAILED:
+            throw new ChangesetPreconditionError(changesetId, responseBody);
+
+          case StatusCodes.REQUEST_TOO_LONG:
+            throw new ChangesetTooLargeError(changesetId, responseBody);
+
+          default:
+            throw error;
         }
       }
+
       throw error;
     }
   }

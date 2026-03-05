@@ -4,14 +4,18 @@ export enum QueueEnum {
   CHANGESET_PRE_UPLOAD = 'changeset-pre-uploads',
   CHANGESET_UPLOAD = 'changeset-uploads',
   CHANGESET_POST_UPLOAD = 'changeset-post-uploads',
-  CHANGESET_CLOSURE_REQUEST = 'changeset-closure-requests',
+  CHANGESET_CLOSURE = 'changeset-closure',
+  CHANGESET_REDIS_CLEANUP = 'changeset-redis-cleanup',
+  CHANGESET_OSM_CLEANUP = 'changeset-osm-cleanup',
 }
 
 export enum WorkerEnum {
   CHANGESET_PRE_UPLOAD = 'changeset-pre-upload-worker',
   CHANGESET_UPLOAD = 'changeset-upload-worker',
   CHANGESET_POST_UPLOAD = 'changeset-post-upload-worker',
-  CHANGESET_CLOSURE_REQUEST = 'changeset-closure-request-worker',
+  CHANGESET_CLOSURE = 'changeset-closure-worker',
+  CHANGESET_REDIS_CLEANUP = 'changeset-redis-cleanup-worker',
+  CHANGESET_OSM_CLEANUP = 'changeset-osm-cleanup-worker',
 }
 
 export const QUEUE_KEY_PREFIX = '{naephi}'; //TODO: make configurable

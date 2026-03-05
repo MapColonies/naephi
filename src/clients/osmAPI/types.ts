@@ -32,6 +32,13 @@ export interface OsmChangesetResponse {
   };
 }
 
+export enum ChangesetStatus {
+  OPEN_AND_EMPTY,
+  OPEN_AND_FULL,
+  CLOSED_AND_EMPTY,
+  CLOSED_AND_FULL,
+}
+
 export interface IOsmAPI {
   /**
    * PUT /api/0.6/changeset/create
@@ -58,5 +65,5 @@ export interface IOsmAPI {
    *
    * Uploads an osmChange paylod to an open changeset.
    */
-  uploadDiff: (changesetId: number, osmChangeXml: string) => Promise<void>;
+  uploadChangeset: (changesetId: number, osmChangeXml: string) => Promise<void>;
 }
