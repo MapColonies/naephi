@@ -18,6 +18,24 @@ export enum WorkerEnum {
   CHANGESET_OSM_CLEANUP = 'changeset-osm-cleanup-worker',
 }
 
+export const JOB_SUFFIX_MAP: Record<QueueEnum, string> = {
+  [QueueEnum.CHANGESET_PRE_UPLOAD]: '-pre-upload',
+  [QueueEnum.CHANGESET_UPLOAD]: '-upload',
+  [QueueEnum.CHANGESET_POST_UPLOAD]: '-post-upload',
+  [QueueEnum.CHANGESET_CLOSURE]: '-closure',
+  [QueueEnum.CHANGESET_REDIS_CLEANUP]: '-redis-cleanup',
+  [QueueEnum.CHANGESET_OSM_CLEANUP]: '-osm-cleanup',
+};
+
+export const JOB_CHILDREN_MAP: Record<QueueEnum, QueueEnum | null> = {
+  [QueueEnum.CHANGESET_PRE_UPLOAD]: null,
+  [QueueEnum.CHANGESET_UPLOAD]: QueueEnum.CHANGESET_PRE_UPLOAD,
+  [QueueEnum.CHANGESET_POST_UPLOAD]: QueueEnum.CHANGESET_UPLOAD,
+  [QueueEnum.CHANGESET_CLOSURE]: QueueEnum.CHANGESET_POST_UPLOAD,
+  [QueueEnum.CHANGESET_REDIS_CLEANUP]: null,
+  [QueueEnum.CHANGESET_OSM_CLEANUP]: null,
+};
+
 export const QUEUE_KEY_PREFIX = '{naephi}'; //TODO: make configurable
 
 export const REDIS_CONNECTION_OPTIONS_SYMBOL = Symbol('RedisConntionOptions');

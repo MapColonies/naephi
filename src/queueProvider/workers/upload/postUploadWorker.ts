@@ -11,7 +11,8 @@ import type { IIdToOsm } from '@src/clients/idToOsm/types';
 import { IdConflictError } from '@src/clients/idToOsm/errors';
 import { QueueEnum, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
-import { ChangesetUploadData, ChangesetUploadReturn } from './types';
+import type { IOsmIdResolver } from '../../../osmIdResolver/interfaces';
+import { ChangesetUploadData } from './types';
 import { prepareEntityBulkRequest } from './util';
 
 @injectable()
@@ -21,6 +22,7 @@ export class PostUploadWorker extends BullWorkerProvider<ChangesetUploadData, vo
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
     @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
     @inject(SERVICES.REDIS_WORKER_CONNECTION) connection: ioRedis,
+    @inject(SERVICES.OSM_ID_RESOLVER) private readonly osmIdResolver: IOsmIdResolver,
     @inject(SERVICES.CHANGE_MERGER_CLIENT) private readonly changeMerger: IChangeMerger,
     @inject(SERVICES.ID_TO_OSM_CLIENT) private readonly idToOsm: IIdToOsm,
     @inject(SERVICES.OSM_SYNC_TRACKER_CLIENT) private readonly tracker: IOsmSyncTracker
@@ -41,8 +43,7 @@ export class PostUploadWorker extends BullWorkerProvider<ChangesetUploadData, vo
 
     this.logger.info({ msg: 'started job processing', queueName: this.queueName, jobId: job.id, jobName: job.name, changesetId });
 
-    const childrenValues = await job.getChildrenValues();
-    const { osmId: changesetOsmId } = childrenValues[`${changesetId}-upload`] as ChangesetUploadReturn;
+    const changesetOsmId = await this.osmIdResolver.resolve(job);
 
     // 1. change-merger::GET /change/{changesetId}/interpret
     const interpretation = await this.changeMerger.interpret(changesetOsmId, 'api', { action: ['create', 'delete'] });

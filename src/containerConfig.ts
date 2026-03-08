@@ -1,4 +1,4 @@
-import { instancePerContainerCachingFactory } from 'tsyringe';
+import { instancePerContainerCachingFactory, predicateAwareClassFactory } from 'tsyringe';
 import { getOtelMixin } from '@map-colonies/tracing-utils';
 import { trace } from '@opentelemetry/api';
 import ioRedis from 'ioredis';
@@ -21,6 +21,10 @@ import {
   createReusableRedisWorkerConnectionFactory,
 } from './queueProvider/connection';
 import { BullFlowProducerProvider } from './queueProvider/queues/bullFlowProducerProvider';
+import { IOsmIdResolver } from './osmIdResolver/interfaces';
+import { AppConfig } from './common/interfaces';
+import { TrackerOsmIdResolver } from './osmIdResolver/trackerOsmIdResolver';
+import { ChildJobOsmIdResolver } from './osmIdResolver/childJobOsmIdResolver';
 
 const registerBullDeps = (): InjectionObject<unknown>[] => {
   const queueProvidersDeps: InjectionObject<unknown>[] = [
@@ -96,7 +100,7 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   try {
     const dependencies: InjectionObject<unknown>[] = [
       { token: SERVICES.CONFIG, provider: { useValue: getConfig() } },
-      // { token: SERVICES.APP_CONFIG, provider: { useValue: getConfig().get('app') } },
+      { token: SERVICES.APP_CONFIG, provider: { useValue: getConfig().get('app') } },
       {
         token: SERVICES.CLEANUP_REGISTRY,
         provider: { useValue: cleanupRegistry },
@@ -161,6 +165,16 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       //     }),
       //   },
       // },
+      {
+        token: SERVICES.OSM_ID_RESOLVER,
+        provider: {
+          useFactory: predicateAwareClassFactory<IOsmIdResolver>(
+            (container) => container.resolve<AppConfig>(SERVICES.APP_CONFIG).osmIdResolver === 'tracker',
+            TrackerOsmIdResolver,
+            ChildJobOsmIdResolver
+          ),
+        },
+      },
       { token: FLOW_ROUTER_SYMBOL, provider: { useFactory: flowRouterFactory } },
       {
         token: HEALTHCHECK,

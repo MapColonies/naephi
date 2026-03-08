@@ -1,7 +1,7 @@
 import type { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { SERVICES } from '@common/constants';
-import { BULL_FLOW_PRODUCER_SYMBOL, QueueEnum } from '@src/queueProvider/constants';
+import { BULL_FLOW_PRODUCER_SYMBOL, JOB_SUFFIX_MAP, QueueEnum } from '@src/queueProvider/constants';
 import type { FlowProducerProvider } from '@src/queueProvider/queues/interfaces';
 
 export interface ChangesetFlowPayload {
@@ -20,7 +20,7 @@ export class FlowManager {
     this.logger.info({ msg: 'initializing changeset upload flow', payload });
 
     const { id: changesetId, flowAttempt = 1 } = payload;
-    const flowId = `${changesetId}-flow-attempt-${flowAttempt}`;
+    const flowId = `${changesetId}-${flowAttempt}`;
 
     if (flowAttempt > 3) {
       // TODO: make configurable
@@ -33,27 +33,27 @@ export class FlowManager {
     }
 
     await this.flowProducer.add({
-      name: `${changesetId}-closure`, // stage 4
+      name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_CLOSURE]}`, // stage 4
       queueName: QueueEnum.CHANGESET_CLOSURE,
-      opts: { jobId: `${flowId}-closure` },
+      opts: { jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_CLOSURE]}` },
       data: { changesetId, flowAttempt },
       children: [
         {
-          name: `${changesetId}-post-upload`, // stage 3
+          name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_POST_UPLOAD]}`, // stage 3
           queueName: QueueEnum.CHANGESET_POST_UPLOAD,
-          opts: { jobId: `${flowId}-post-upload` },
+          opts: { jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_POST_UPLOAD]}` },
           data: { changesetId, flowAttempt },
           children: [
             {
-              name: `${changesetId}-upload`, // stage 2
+              name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_UPLOAD]}`, // stage 2
               queueName: QueueEnum.CHANGESET_UPLOAD,
-              opts: { jobId: `${flowId}-upload` },
+              opts: { jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_UPLOAD]}` },
               data: { changesetId, flowAttempt },
               children: [
                 {
-                  name: `${changesetId}-pre-upload`, // stage 1
+                  name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_PRE_UPLOAD]}`, // stage 1
                   queueName: QueueEnum.CHANGESET_PRE_UPLOAD,
-                  opts: { jobId: `${flowId}-pre-upload` },
+                  opts: { jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_PRE_UPLOAD]}` },
                   data: { changesetId, flowAttempt },
                 },
               ],

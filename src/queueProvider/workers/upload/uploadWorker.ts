@@ -5,7 +5,6 @@ import { Registry } from 'prom-client';
 import { Job, UnrecoverableError } from 'bullmq';
 import { type AppConfig } from '@src/common/interfaces';
 import { ChangesetStatus, type IOsmAPI } from '@src/clients/osmAPI/types';
-import type { IOsmSyncTracker } from '@src/clients/osmSyncTracker/types';
 import { SERVICES } from '@src/common/constants';
 import type { IChangeMerger, MergeRequest } from '@src/clients/changeMerger/types';
 import { RedisClient } from '@src/redis/client';
@@ -23,6 +22,7 @@ import {
 } from '@src/clients/osmAPI/errors';
 import { QueueEnum, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
+import type { IOsmIdResolver } from '../../../osmIdResolver/interfaces';
 import { ChangesetUploadData, ChangesetUploadReturn, CompleteChangesetIdentifiers } from './types';
 
 interface ChangesetContext {
@@ -40,8 +40,8 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
     @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
     @inject(SERVICES.REDIS_WORKER_CONNECTION) connection: ioRedis,
     @inject(RedisClient) private readonly redis: RedisClient,
+    @inject(SERVICES.OSM_ID_RESOLVER) private readonly osmIdResolver: IOsmIdResolver,
     @inject(SERVICES.OSM_API_CLIENT) private readonly osmApi: IOsmAPI,
-    @inject(SERVICES.OSM_SYNC_TRACKER_CLIENT) private readonly tracker: IOsmSyncTracker,
     @inject(SERVICES.CHANGE_MERGER_CLIENT) private readonly changeMerger: IChangeMerger,
     @inject(QueueEnum.CHANGESET_REDIS_CLEANUP) private readonly redisCleanupQueue: JobQueueProvider<CompleteChangesetIdentifiers>,
     @inject(QueueEnum.CHANGESET_OSM_CLEANUP) private readonly osmCleanupQueue: JobQueueProvider<CompleteChangesetIdentifiers>,
@@ -63,8 +63,7 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
 
     this.logger.info({ msg: 'started job processing', queueName: this.queueName, jobId: job.id, jobName: job.name, changesetId, flowAttempt });
 
-    const childrenValues = await job.getChildrenValues();
-    const { osmId: changesetOsmId } = childrenValues[`${changesetId}-pre-upload`] as ChangesetUploadReturn;
+    const changesetOsmId = await this.osmIdResolver.resolve(job);
 
     // 1. osm-api::GET /changeset/{changesetId}.json
     const status = await this.getChangesetStatus(changesetOsmId);

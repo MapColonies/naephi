@@ -17,6 +17,7 @@ export const SERVICES = {
   REDIS_QUEUE_CONNECTION: Symbol('RedisQueueConnection'),
   CLEANUP_REGISTRY: Symbol('CleanupRegistry'),
   APP_CONFIG: Symbol('AppConfig'),
+  OSM_ID_RESOLVER: Symbol('OsmIdResolver'),
   OSM_API_CLIENT: Symbol('OsmApi'),
   OSM_SYNC_TRACKER_CLIENT: Symbol('OsmSyncTracker'),
   ID_TO_OSM_CLIENT: Symbol('IdToOsm'),

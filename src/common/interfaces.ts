@@ -30,4 +30,5 @@ export type ExtendedRedisOptions = {
 export interface AppConfig {
   uiPath: string;
   workerOptions: WorkerOptions;
+  osmIdResolver: 'tracker' | 'childJob';
 }
