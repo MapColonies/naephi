@@ -10,7 +10,7 @@ import { getApp } from './app';
 import { BULLMQ_WORKERS_INITIALIZER } from './queueProvider/constants';
 import { withTimeout } from './common/util';
 
-const WORKER_INIT_TIMEOUT_MS = 30000;
+const DEFAULT_INIT_TIMEOUT_MS = 30000;
 
 const main = async (): Promise<void> => {
   let container: DependencyContainer | undefined;
@@ -23,6 +23,7 @@ const main = async (): Promise<void> => {
     const logger = container.resolve<Logger>(SERVICES.LOGGER);
     const config = container.resolve<ConfigType>(SERVICES.CONFIG);
     const port = config.get('server.port');
+    const initTimeout = config.get('app.initTimeout');
 
     const server = createTerminus(createServer(app), {
       healthChecks: { '/liveness': container.resolve(HEALTHCHECK) },
@@ -35,7 +36,7 @@ const main = async (): Promise<void> => {
 
     const workersInit = container.resolve<() => Promise<void>>(BULLMQ_WORKERS_INITIALIZER);
     try {
-      await withTimeout(workersInit(), WORKER_INIT_TIMEOUT_MS); // TODO: should be configurable
+      await withTimeout(workersInit(), initTimeout ?? DEFAULT_INIT_TIMEOUT_MS);
     } catch (error) {
       throw new Error(`worker initialization failed: ${(error as Error).message}`, { cause: error });
     }

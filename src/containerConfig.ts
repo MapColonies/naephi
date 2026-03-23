@@ -6,7 +6,6 @@ import { Registry } from 'prom-client';
 import { HealthCheck } from '@godaddy/terminus';
 import { jsLogger, Logger } from '@map-colonies/js-logger';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
-import axios from 'axios';
 import { InjectionObject, registerDependencies, RegisterOptions } from '@common/dependencyRegistration';
 import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from '@common/constants';
 import { getTracing } from '@common/tracing';
@@ -28,7 +27,6 @@ import {
 } from './queueProvider/connection';
 import { BullFlowProducerProvider } from './queueProvider/queues/bullFlowProducerProvider';
 import { IOsmIdResolver } from './osmIdResolver/interfaces';
-import { AppConfig } from './common/interfaces';
 import { TrackerOsmIdResolver } from './osmIdResolver/trackerOsmIdResolver';
 import { ChildJobOsmIdResolver } from './osmIdResolver/childJobOsmIdResolver';
 import { workerIdToClass } from './queueProvider/workers/upload';
@@ -109,7 +107,6 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
   try {
     const dependencies: InjectionObject<unknown>[] = [
       { token: SERVICES.CONFIG, provider: { useValue: getConfig() } },
-      { token: SERVICES.APP_CONFIG, provider: { useValue: getConfig().get('app') } },
       {
         token: SERVICES.CLEANUP_REGISTRY,
         provider: { useValue: cleanupRegistry },
@@ -185,7 +182,11 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         token: SERVICES.OSM_ID_RESOLVER,
         provider: {
           useFactory: predicateAwareClassFactory<IOsmIdResolver>(
-            (container) => container.resolve<AppConfig>(SERVICES.APP_CONFIG).osmIdResolver === 'tracker',
+            (container) => {
+              const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+              const resolver = config.get('app.osmIdResolver')!;
+              return resolver === 'tracker';
+            },
             TrackerOsmIdResolver,
             ChildJobOsmIdResolver
           ),

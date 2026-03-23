@@ -3,10 +3,11 @@ import { injectable, inject } from 'tsyringe';
 import { type Logger } from '@map-colonies/js-logger';
 import { Registry } from 'prom-client';
 import { Job } from 'bullmq';
-import { type AppConfig } from '@src/common/interfaces';
 import { SERVICES } from '@src/common/constants';
 import { RedisClient } from '@src/redis/client';
-import { QueueEnum, WorkerEnum } from '../../constants';
+import type { ConfigType } from '@src/common/config';
+import { QueueConfiguration } from '@src/queueProvider/options';
+import { QueueEnum, QueueIdentifiers, WorkerEnum } from '../../constants';
 import { BullBatchWorkerProvider } from '../batchWorker/bullBatchWorkerProvider';
 import { CompleteChangesetIdentifiers } from './types';
 
@@ -15,13 +16,17 @@ export class RedisCleanupWorker extends BullBatchWorkerProvider<CompleteChangese
   public constructor(
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
-    @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
+    @inject(SERVICES.CONFIG) config: ConfigType,
     @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
     @inject(RedisClient) private readonly redis: RedisClient
   ) {
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_REDIS_CLEANUP });
-    const { workerOptions } = appConfig;
-    super({ logger: workerLogger, metricsRegistry, connection, workerOptions });
+    const { workerOptions, batchOptions: batch } = config.get(
+      `app.queues.${QueueIdentifiers.CHANGESET_REDIS_CLEANUP}`
+    ) as unknown as QueueConfiguration;
+    const prefix = config.get('bullmq.keyPrefix');
+
+    super({ logger: workerLogger, metricsRegistry, connection, batch, workerOptions: { ...workerOptions, prefix } });
 
     this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });
   }

@@ -31,7 +31,243 @@
     }
   },
   "app": {
-    "uiPath": "/ui"
+    "uiPath": "/ui",
+    "initTimeout": 30000,
+    "osmIdResolver": "tracker",
+    "flows": {
+      "changesetUpload": {
+        "maxAttempts": 10
+      }
+    },
+    "queues": {
+      "changesetPreUpload": {
+        "jobOptions": {
+          "attempts": 3,
+          "delay": 0,
+          "backoff": {
+            "type": "exponential",
+            "delay": 1000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600,
+            "count": 100
+          },
+          "removeOnFail": {
+            "age": 86400,
+            "count": 1000
+          }
+        }
+      },
+      "changesetUpload": {
+        "jobOptions": {
+          "attempts": 3,
+          "delay": 0,
+          "backoff": {
+            "type": "exponential",
+            "delay": 1000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600,
+            "count": 100
+          },
+          "removeOnFail": {
+            "age": 86400,
+            "count": 1000
+          }
+        }
+      },
+      "changesetPostUpload": {
+        "jobOptions": {
+          "attempts": 3,
+          "delay": 0,
+          "backoff": {
+            "type": "exponential",
+            "delay": 1000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600,
+            "count": 100
+          },
+          "removeOnFail": {
+            "age": 86400,
+            "count": 1000
+          }
+        }
+      },
+      "changesetClosure": {
+        "jobOptions": {
+          "attempts": 3,
+          "delay": 0,
+          "backoff": {
+            "type": "exponential",
+            "delay": 1000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600,
+            "count": 100
+          },
+          "removeOnFail": {
+            "age": 86400,
+            "count": 1000
+          }
+        },
+        "batchOptions": {
+          "size": 10,
+          "minSize": 1,
+          "timeout": 5000
+        }
+      },
+      "changesetRedisCleanup": {
+        "jobOptions": {
+          "attempts": 3,
+          "delay": 0,
+          "backoff": {
+            "type": "exponential",
+            "delay": 1000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600,
+            "count": 100
+          },
+          "removeOnFail": {
+            "age": 86400,
+            "count": 1000
+          }
+        },
+        "batchOptions": {
+          "size": 10,
+          "minSize": 1,
+          "timeout": 5000
+        }
+      },
+      "changesetOsmCleanup": {
+        "jobOptions": {
+          "attempts": 3,
+          "delay": 0,
+          "backoff": {
+            "type": "exponential",
+            "delay": 1000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600,
+            "count": 100
+          },
+          "removeOnFail": {
+            "age": 86400,
+            "count": 1000
+          }
+        },
+        "batchOptions": {
+          "size": 10,
+          "minSize": 1,
+          "timeout": 5000
+        }
+      }
+    },
+    "clients": {
+      "osmApi": {
+        "url": "http://localhost:3000",
+        "timeout": 5000,
+        "enableRetryStrategy": false,
+        "retryStrategy": {
+          "retries": 3,
+          "shouldResetTimeout": true,
+          "isExponential": true,
+          "delay": 1000
+        },
+        "headers": {}
+      },
+      "osmSyncTracker": {
+        "url": "http://localhost:3001",
+        "timeout": 5000,
+        "enableRetryStrategy": false,
+        "retryStrategy": {
+          "retries": 3,
+          "shouldResetTimeout": true,
+          "isExponential": true,
+          "delay": 1000
+        },
+        "headers": {}
+      },
+      "changeMerger": {
+        "url": "http://localhost:3002",
+        "timeout": 5000,
+        "enableRetryStrategy": false,
+        "retryStrategy": {
+          "retries": 3,
+          "shouldResetTimeout": true,
+          "isExponential": true,
+          "delay": 1000
+        },
+        "headers": {}
+      },
+      "idToOsm": {
+        "url": "http://localhost:3003",
+        "timeout": 5000,
+        "enableRetryStrategy": false,
+        "retryStrategy": {
+          "retries": 3,
+          "shouldResetTimeout": true,
+          "isExponential": true,
+          "delay": 1000
+        },
+        "headers": {}
+      }
+    }
   },
   "redis": {
     "host": "localhost",

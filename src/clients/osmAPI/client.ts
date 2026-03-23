@@ -1,6 +1,6 @@
 import { isAxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
-import { inject, injectable, singleton } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import type { Logger } from '@map-colonies/js-logger';
 import { Registry } from 'prom-client';
 import { SERVICE_NAME, SERVICES } from '@src/common/constants';
@@ -81,9 +81,10 @@ export class OsmApiClient extends BaseClient implements IOsmAPI {
       this.logError({ err: error, msg: 'failed changeset upload', metadata: { changesetId } });
 
       if (isAxiosError(error) && error.response?.status !== undefined) {
-        const status = error.response.status;
+        const status = error.response.status as StatusCodes;
         const responseBody = typeof error.response.data === 'string' ? error.response.data : 'request failed';
 
+        // eslint-disable-next-line @typescript-eslint/switch-exhaustiveness-check
         switch (status) {
           case StatusCodes.BAD_REQUEST:
             throw new ChangesetPayloadError(changesetId, responseBody);

@@ -1,6 +1,15 @@
+/* eslint-disable @typescript-eslint/naming-convention */ // oauth-1.0a parameters are in snake case
 import { createHmac } from 'crypto';
+import oAuth from 'oauth-1.0a';
 import { InternalAxiosRequestConfig } from 'axios';
-import OAuth from 'oauth-1.0a';
+
+const buildRequestUrl = (baseUrl: string, path: string, params?: Record<string, string>): URL => {
+  const url = new URL(`${baseUrl}${path}`);
+  if (params !== undefined) {
+    Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+  }
+  return url;
+};
 
 export const AUTHORIZATION_HEADER = 'Authorization';
 
@@ -26,19 +35,11 @@ export interface OAuth2Config {
 export type AuthConfig = BasicAuthConfig | OAuth1Config | OAuth2Config;
 
 export const createOAuthSigner = (auth: OAuth1Config): OAuth =>
-  new OAuth({
+  new oAuth({
     consumer: { key: auth.consumerKey, secret: auth.consumerSecret },
     signature_method: 'HMAC-SHA1',
     hash_function: (baseString, key) => createHmac('sha1', key).update(baseString).digest('base64'),
   });
-
-const buildRequestUrl = (baseUrl: string, path: string, params?: Record<string, string>): URL => {
-  const url = new URL(`${baseUrl}${path}`);
-  if (params !== undefined) {
-    Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
-  }
-  return url;
-};
 
 export const applyBasicAuth = (config: InternalAxiosRequestConfig, auth: BasicAuthConfig): void => {
   config.auth = { username: auth.username, password: auth.password };

@@ -39,7 +39,7 @@ export interface BatchWorkerProviderOptions extends WorkerProviderOptions {
   batch?: Partial<BatchOptions>;
 }
 
-export interface QueueOptions {
+export interface QueueConfiguration {
   jobOptions: JobsOptions;
   workerOptions: WorkerOptions;
   batchOptions?: BatchOptions;

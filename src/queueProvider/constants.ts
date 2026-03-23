@@ -19,6 +19,7 @@ export enum WorkerEnum {
   CHANGESET_OSM_CLEANUP = 'changeset-osm-cleanup-worker',
 }
 
+/* eslint-disable @typescript-eslint/naming-convention */
 export const QueueIdentifiers = {
   CHANGESET_PRE_UPLOAD: 'changesetPreUpload',
   CHANGESET_UPLOAD: 'changesetUpload',
@@ -27,6 +28,7 @@ export const QueueIdentifiers = {
   CHANGESET_REDIS_CLEANUP: 'changesetRedisCleanup',
   CHANGESET_OSM_CLEANUP: 'changesetOsmCleanup',
 } as const satisfies Record<keyof typeof QueueEnum, string>;
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export type QueueId = (typeof QueueIdentifiers)[keyof typeof QueueIdentifiers];
 
@@ -48,7 +50,7 @@ export const JOB_CHILDREN_MAP: Record<QueueEnum, QueueEnum | null> = {
   [QueueEnum.CHANGESET_OSM_CLEANUP]: null,
 };
 
-export const BULLMQ_KEY_PREFIX = '{naephi}'; //TODO: make configurable
+export const BULLMQ_KEY_PREFIX = '{naephi}';
 
 export const BULLMQ_CONNECTION_OPTIONS_SYMBOL = Symbol('BullMqConntionOptions');
 

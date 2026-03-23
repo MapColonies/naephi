@@ -1,6 +1,7 @@
 {
   "extends": "@map-colonies/tsconfig/tsconfig-app",
   "compilerOptions": {
+    "moduleResolution": "NodeNext",
     "baseUrl": ".",
     "paths": {
       "@src/*": ["src/*"],

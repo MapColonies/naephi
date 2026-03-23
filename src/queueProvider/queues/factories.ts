@@ -1,16 +1,15 @@
-import { Queue as BullQueue, FlowProducer, Worker } from 'bullmq';
+import { Queue as BullQueue, FlowProducer } from 'bullmq';
 import { DependencyContainer, FactoryFunction } from 'tsyringe';
 import ioRedis from 'ioredis';
 import { Logger } from '@map-colonies/js-logger';
 import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { Registry } from 'prom-client';
 import { SERVICES } from '@src/common/constants';
-import { BULLMQ_KEY_PREFIX } from '../constants';
+import { ConfigType } from '@src/common/config';
 import { bullMqOtelFactory } from '../telemetry';
 import { BullWorkerProvider } from '../workers/bullWorkerProvider';
 import { BullQueueProvider } from './bullQueueProvider';
 import { BullFlowProducerProvider } from './bullFlowProducerProvider';
-import { ConfigType } from '@src/common/config';
 
 export const bullQueueProviderFactory = (queueName: string): FactoryFunction<BullQueueProvider> => {
   const factoryFn: FactoryFunction<BullQueueProvider> = (container) => {

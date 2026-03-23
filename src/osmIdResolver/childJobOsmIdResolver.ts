@@ -6,9 +6,6 @@ import { JOB_CHILDREN_MAP, JOB_SUFFIX_MAP, QueueEnum } from '@src/queueProvider/
 import { ChangesetUploadData, ChangesetUploadReturn } from '../queueProvider/workers/upload/types';
 import { IOsmIdResolver } from './interfaces';
 
-/**
- * Resolves changeset osm id by fetching the parent/child job relationship in the flow
- */
 @injectable()
 export class ChildJobOsmIdResolver implements IOsmIdResolver {
   public constructor(@inject(SERVICES.LOGGER) private readonly logger: Logger) {}
@@ -19,7 +16,7 @@ export class ChildJobOsmIdResolver implements IOsmIdResolver {
     const currentQueue = job.queueName as QueueEnum;
     const childQueue = JOB_CHILDREN_MAP[currentQueue];
 
-    if (!childQueue) {
+    if (childQueue === null) {
       this.logger.error({
         msg: 'could not resolve osm id',
         resolver: 'childJob',
@@ -49,7 +46,7 @@ export class ChildJobOsmIdResolver implements IOsmIdResolver {
     const childrenValues = await job.getChildrenValues();
     const value = childrenValues[childJobKey] as ChangesetUploadReturn | undefined;
 
-    if (!value?.osmId) {
+    if (value === undefined) {
       this.logger.error({
         msg: 'failed to resolve osm id',
         resolver: 'childJob',

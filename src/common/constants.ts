@@ -18,7 +18,6 @@ export const SERVICES = {
   BULLMQ_WORKER_CONNECTION: Symbol('BullMqWorkerConnection'),
   BULLMQ_QUEUE_CONNECTION: Symbol('BullMqQueueConnection'),
   CLEANUP_REGISTRY: Symbol('CleanupRegistry'),
-  APP_CONFIG: Symbol('AppConfig'),
   OSM_ID_RESOLVER: Symbol('OsmIdResolver'),
 } satisfies Record<string, symbol>;
 /* eslint-enable @typescript-eslint/naming-convention */

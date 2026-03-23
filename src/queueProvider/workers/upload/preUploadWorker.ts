@@ -2,8 +2,7 @@ import ioRedis from 'ioredis';
 import { injectable, inject } from 'tsyringe';
 import { type Logger } from '@map-colonies/js-logger';
 import { Registry } from 'prom-client';
-import { Job, UnrecoverableError } from 'bullmq';
-import { type AppConfig } from '@src/common/interfaces';
+import { Job, UnrecoverableError, WorkerOptions } from 'bullmq';
 import { ChangesetStatus, type IOsmAPI } from '@src/clients/osmAPI/types';
 import type { IOsmSyncTracker, PatchEntitiesRequest } from '@src/clients/osmSyncTracker/types';
 import { SERVICES } from '@src/common/constants';
@@ -13,7 +12,8 @@ import { RedisClient } from '@src/redis/client';
 import { determineChangesetStatus } from '@src/clients/osmAPI/helpers';
 import { ChangesetNotFoundError } from '@src/clients/osmAPI/errors';
 import { CLIENTS } from '@src/clients/constants';
-import { QueueEnum, WorkerEnum } from '../../constants';
+import type { ConfigType } from '@src/common/config';
+import { QueueEnum, QueueIdentifiers, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import { ChangesetUploadData, ChangesetUploadReturn } from './types';
 
@@ -22,15 +22,17 @@ export class PreUploadWorker extends BullWorkerProvider<ChangesetUploadData, Cha
   public constructor(
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
-    @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
+    @inject(SERVICES.CONFIG) config: ConfigType,
     @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
     @inject(RedisClient) private readonly redis: RedisClient,
     @inject(CLIENTS.OSM_API) private readonly osmApi: IOsmAPI,
     @inject(CLIENTS.OSM_SYNC_TRACKER) private readonly tracker: IOsmSyncTracker
   ) {
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_PRE_UPLOAD });
-    const { workerOptions } = appConfig;
-    super({ logger: workerLogger, metricsRegistry, connection, workerOptions });
+    const workerOptions = config.get(`app.queues.${QueueIdentifiers.CHANGESET_PRE_UPLOAD}.workerOptions`) as unknown as WorkerOptions;
+    const prefix = config.get('bullmq.keyPrefix');
+
+    super({ logger: workerLogger, metricsRegistry, connection, workerOptions: { ...workerOptions, prefix } });
 
     this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });
   }
@@ -57,7 +59,7 @@ export class PreUploadWorker extends BullWorkerProvider<ChangesetUploadData, Cha
     const trackerChangeset = await this.tracker.getChangeset(changesetId);
     let changesetOsmId: number | undefined = trackerChangeset?.osmId;
 
-    if (changesetOsmId) {
+    if (changesetOsmId !== undefined) {
       try {
         // 3.i. osm-api::GET /changeset/{changesetId}
         const osmChangeset = await this.osmApi.getChangeset(changesetOsmId);
@@ -87,8 +89,8 @@ export class PreUploadWorker extends BullWorkerProvider<ChangesetUploadData, Cha
       changesetOsmId = await this.osmApi.createChangeset({
         tags: {
           ...DEFAULT_CREATE_CHANGESET_TAGS,
-          changeset_id: changesetId,
-          flow_attempt: flowAttempt.toString(),
+          ['changeset_id']: changesetId,
+          ['flow_attempt']: flowAttempt.toString(),
         },
       });
 

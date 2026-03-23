@@ -24,7 +24,10 @@
     }
   },
   "server": {
-    "port": "SERVER_PORT",
+    "port": {
+      "__name": "SERVER_PORT",
+      "__format": "number"
+    },
     "request": {
       "payload": {
         "limit": "REQUEST_PAYLOAD_LIMIT"
@@ -40,7 +43,585 @@
     }
   },
   "app": {
-    "uiPath": "APP_UI_PATH"
+    "uiPath": "APP_UI_PATH",
+    "initTimeout": {
+      "__name": "APP_INIT_TIMEOUT",
+      "__format": "number"
+    },
+    "osmIdResolver": "APP_OSM_ID_RESOLVER",
+    "flows": {
+      "changesetUpload": {
+        "maxAttempts": {
+          "__name": "APP_FLOWS_CHANGESET_UPLOAD_MAX_ATTEMPTS",
+          "__format": "number"
+        }
+      }
+    },
+    "queues": {
+      "changesetPreUpload": {
+        "jobOptions": {
+          "attempts": {
+            "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_JOB_ATTEMPTS",
+            "__format": "number"
+          },
+          "delay": {
+            "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_JOB_DELAY",
+            "__format": "number"
+          },
+          "backoff": {
+            "type": "APP_QUEUES_CHANGESET_PRE_UPLOAD_JOB_BACKOFF_TYPE",
+            "delay": {
+              "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_JOB_BACKOFF_DELAY",
+              "__format": "number"
+            }
+          }
+        },
+        "workerOptions": {
+          "concurrency": {
+            "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_CONCURRENCY",
+            "__format": "number"
+          },
+          "limiter": {
+            "max": {
+              "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_LIMITER_MAX",
+              "__format": "number"
+            },
+            "duration": {
+              "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_LIMITER_DURATION",
+              "__format": "number"
+            }
+          },
+          "maxStalledCount": {
+            "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_MAX_STALLED_COUNT",
+            "__format": "number"
+          },
+          "stalledInterval": {
+            "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_STALLED_INTERVAL",
+            "__format": "number"
+          },
+          "removeOnComplete": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_REMOVE_ON_COMPLETE_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_REMOVE_ON_COMPLETE_COUNT",
+              "__format": "number"
+            }
+          },
+          "removeOnFail": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_REMOVE_ON_FAIL_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_PRE_UPLOAD_WORKER_REMOVE_ON_FAIL_COUNT",
+              "__format": "number"
+            }
+          }
+        }
+      },
+      "changesetUpload": {
+        "jobOptions": {
+          "attempts": {
+            "__name": "APP_QUEUES_CHANGESET_UPLOAD_JOB_ATTEMPTS",
+            "__format": "number"
+          },
+          "delay": {
+            "__name": "APP_QUEUES_CHANGESET_UPLOAD_JOB_DELAY",
+            "__format": "number"
+          },
+          "backoff": {
+            "type": "APP_QUEUES_CHANGESET_UPLOAD_JOB_BACKOFF_TYPE",
+            "delay": {
+              "__name": "APP_QUEUES_CHANGESET_UPLOAD_JOB_BACKOFF_DELAY",
+              "__format": "number"
+            }
+          }
+        },
+        "workerOptions": {
+          "concurrency": {
+            "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_CONCURRENCY",
+            "__format": "number"
+          },
+          "limiter": {
+            "max": {
+              "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_LIMITER_MAX",
+              "__format": "number"
+            },
+            "duration": {
+              "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_LIMITER_DURATION",
+              "__format": "number"
+            }
+          },
+          "maxStalledCount": {
+            "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_MAX_STALLED_COUNT",
+            "__format": "number"
+          },
+          "stalledInterval": {
+            "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_STALLED_INTERVAL",
+            "__format": "number"
+          },
+          "removeOnComplete": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_REMOVE_ON_COMPLETE_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_REMOVE_ON_COMPLETE_COUNT",
+              "__format": "number"
+            }
+          },
+          "removeOnFail": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_REMOVE_ON_FAIL_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_UPLOAD_WORKER_REMOVE_ON_FAIL_COUNT",
+              "__format": "number"
+            }
+          }
+        }
+      },
+      "changesetPostUpload": {
+        "jobOptions": {
+          "attempts": {
+            "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_JOB_ATTEMPTS",
+            "__format": "number"
+          },
+          "delay": {
+            "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_JOB_DELAY",
+            "__format": "number"
+          },
+          "backoff": {
+            "type": "APP_QUEUES_CHANGESET_POST_UPLOAD_JOB_BACKOFF_TYPE",
+            "delay": {
+              "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_JOB_BACKOFF_DELAY",
+              "__format": "number"
+            }
+          }
+        },
+        "workerOptions": {
+          "concurrency": {
+            "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_CONCURRENCY",
+            "__format": "number"
+          },
+          "limiter": {
+            "max": {
+              "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_LIMITER_MAX",
+              "__format": "number"
+            },
+            "duration": {
+              "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_LIMITER_DURATION",
+              "__format": "number"
+            }
+          },
+          "maxStalledCount": {
+            "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_MAX_STALLED_COUNT",
+            "__format": "number"
+          },
+          "stalledInterval": {
+            "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_STALLED_INTERVAL",
+            "__format": "number"
+          },
+          "removeOnComplete": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_REMOVE_ON_COMPLETE_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_REMOVE_ON_COMPLETE_COUNT",
+              "__format": "number"
+            }
+          },
+          "removeOnFail": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_REMOVE_ON_FAIL_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_POST_UPLOAD_WORKER_REMOVE_ON_FAIL_COUNT",
+              "__format": "number"
+            }
+          }
+        }
+      },
+      "changesetClosure": {
+        "jobOptions": {
+          "attempts": {
+            "__name": "APP_QUEUES_CHANGESET_CLOSURE_JOB_ATTEMPTS",
+            "__format": "number"
+          },
+          "delay": {
+            "__name": "APP_QUEUES_CHANGESET_CLOSURE_JOB_DELAY",
+            "__format": "number"
+          },
+          "backoff": {
+            "type": "APP_QUEUES_CHANGESET_CLOSURE_JOB_BACKOFF_TYPE",
+            "delay": {
+              "__name": "APP_QUEUES_CHANGESET_CLOSURE_JOB_BACKOFF_DELAY",
+              "__format": "number"
+            }
+          }
+        },
+        "workerOptions": {
+          "concurrency": {
+            "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_CONCURRENCY",
+            "__format": "number"
+          },
+          "limiter": {
+            "max": {
+              "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_LIMITER_MAX",
+              "__format": "number"
+            },
+            "duration": {
+              "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_LIMITER_DURATION",
+              "__format": "number"
+            }
+          },
+          "maxStalledCount": {
+            "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_MAX_STALLED_COUNT",
+            "__format": "number"
+          },
+          "stalledInterval": {
+            "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_STALLED_INTERVAL",
+            "__format": "number"
+          },
+          "removeOnComplete": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_REMOVE_ON_COMPLETE_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_REMOVE_ON_COMPLETE_COUNT",
+              "__format": "number"
+            }
+          },
+          "removeOnFail": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_REMOVE_ON_FAIL_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_CLOSURE_WORKER_REMOVE_ON_FAIL_COUNT",
+              "__format": "number"
+            }
+          }
+        },
+        "batchOptions": {
+          "size": {
+            "__name": "APP_QUEUES_CHANGESET_CLOSURE_BATCH_SIZE",
+            "__format": "number"
+          },
+          "minSize": {
+            "__name": "APP_QUEUES_CHANGESET_CLOSURE_BATCH_MIN_SIZE",
+            "__format": "number"
+          },
+          "timeout": {
+            "__name": "APP_QUEUES_CHANGESET_CLOSURE_BATCH_TIMEOUT",
+            "__format": "number"
+          }
+        }
+      },
+      "changesetRedisCleanup": {
+        "jobOptions": {
+          "attempts": {
+            "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_JOB_ATTEMPTS",
+            "__format": "number"
+          },
+          "delay": {
+            "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_JOB_DELAY",
+            "__format": "number"
+          },
+          "backoff": {
+            "type": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_JOB_BACKOFF_TYPE",
+            "delay": {
+              "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_JOB_BACKOFF_DELAY",
+              "__format": "number"
+            }
+          }
+        },
+        "workerOptions": {
+          "concurrency": {
+            "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_CONCURRENCY",
+            "__format": "number"
+          },
+          "limiter": {
+            "max": {
+              "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_LIMITER_MAX",
+              "__format": "number"
+            },
+            "duration": {
+              "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_LIMITER_DURATION",
+              "__format": "number"
+            }
+          },
+          "maxStalledCount": {
+            "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_MAX_STALLED_COUNT",
+            "__format": "number"
+          },
+          "stalledInterval": {
+            "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_STALLED_INTERVAL",
+            "__format": "number"
+          },
+          "removeOnComplete": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_REMOVE_ON_COMPLETE_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_REMOVE_ON_COMPLETE_COUNT",
+              "__format": "number"
+            }
+          },
+          "removeOnFail": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_REMOVE_ON_FAIL_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_WORKER_REMOVE_ON_FAIL_COUNT",
+              "__format": "number"
+            }
+          }
+        },
+        "batchOptions": {
+          "size": {
+            "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_BATCH_SIZE",
+            "__format": "number"
+          },
+          "minSize": {
+            "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_BATCH_MIN_SIZE",
+            "__format": "number"
+          },
+          "timeout": {
+            "__name": "APP_QUEUES_CHANGESET_REDIS_CLEANUP_BATCH_TIMEOUT",
+            "__format": "number"
+          }
+        }
+      },
+      "changesetOsmCleanup": {
+        "jobOptions": {
+          "attempts": {
+            "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_JOB_ATTEMPTS",
+            "__format": "number"
+          },
+          "delay": {
+            "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_JOB_DELAY",
+            "__format": "number"
+          },
+          "backoff": {
+            "type": "APP_QUEUES_CHANGESET_OSM_CLEANUP_JOB_BACKOFF_TYPE",
+            "delay": {
+              "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_JOB_BACKOFF_DELAY",
+              "__format": "number"
+            }
+          }
+        },
+        "workerOptions": {
+          "concurrency": {
+            "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_CONCURRENCY",
+            "__format": "number"
+          },
+          "limiter": {
+            "max": {
+              "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_LIMITER_MAX",
+              "__format": "number"
+            },
+            "duration": {
+              "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_LIMITER_DURATION",
+              "__format": "number"
+            }
+          },
+          "maxStalledCount": {
+            "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_MAX_STALLED_COUNT",
+            "__format": "number"
+          },
+          "stalledInterval": {
+            "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_STALLED_INTERVAL",
+            "__format": "number"
+          },
+          "removeOnComplete": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_REMOVE_ON_COMPLETE_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_REMOVE_ON_COMPLETE_COUNT",
+              "__format": "number"
+            }
+          },
+          "removeOnFail": {
+            "age": {
+              "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_REMOVE_ON_FAIL_AGE",
+              "__format": "number"
+            },
+            "count": {
+              "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_WORKER_REMOVE_ON_FAIL_COUNT",
+              "__format": "number"
+            }
+          }
+        },
+        "batchOptions": {
+          "size": {
+            "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_BATCH_SIZE",
+            "__format": "number"
+          },
+          "minSize": {
+            "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_BATCH_MIN_SIZE",
+            "__format": "number"
+          },
+          "timeout": {
+            "__name": "APP_QUEUES_CHANGESET_OSM_CLEANUP_BATCH_TIMEOUT",
+            "__format": "number"
+          }
+        }
+      }
+    },
+    "clients": {
+      "osmApi": {
+        "url": "APP_CLIENTS_OSM_API_URL",
+        "timeout": {
+          "__name": "APP_CLIENTS_OSM_API_TIMEOUT",
+          "__format": "number"
+        },
+        "enableRetryStrategy": {
+          "__name": "APP_CLIENTS_OSM_API_ENABLE_RETRY_STRATEGY",
+          "__format": "boolean"
+        },
+        "retryStrategy": {
+          "retries": {
+            "__name": "APP_CLIENTS_OSM_API_RETRY_RETRIES",
+            "__format": "number"
+          },
+          "shouldResetTimeout": {
+            "__name": "APP_CLIENTS_OSM_API_RETRY_SHOULD_RESET_TIMEOUT",
+            "__format": "boolean"
+          },
+          "isExponential": {
+            "__name": "APP_CLIENTS_OSM_API_RETRY_IS_EXPONENTIAL",
+            "__format": "boolean"
+          },
+          "delay": {
+            "__name": "APP_CLIENTS_OSM_API_RETRY_DELAY",
+            "__format": "number"
+          }
+        },
+        "headers": {
+          "__name": "APP_CLIENTS_OSM_API_HEADERS",
+          "__format": "json"
+        },
+        "auth": {
+          "type": "APP_CLIENTS_OSM_API_AUTH_TYPE",
+          "username": "APP_CLIENTS_OSM_API_AUTH_USERNAME",
+          "password": "APP_CLIENTS_OSM_API_AUTH_PASSWORD",
+          "accessToken": "APP_CLIENTS_OSM_API_AUTH_ACCESS_TOKEN",
+          "consumerKey": "APP_CLIENTS_OSM_API_AUTH_CONSUMER_KEY",
+          "consumerSecret": "APP_CLIENTS_OSM_API_AUTH_CONSUMER_SECRET",
+          "accessTokenSecret": "APP_CLIENTS_OSM_API_AUTH_ACCESS_TOKEN_SECRET"
+        }
+      },
+      "osmSyncTracker": {
+        "url": "APP_CLIENTS_OSM_SYNC_TRACKER_URL",
+        "timeout": {
+          "__name": "APP_CLIENTS_OSM_SYNC_TRACKER_TIMEOUT",
+          "__format": "number"
+        },
+        "enableRetryStrategy": {
+          "__name": "APP_CLIENTS_OSM_SYNC_TRACKER_ENABLE_RETRY_STRATEGY",
+          "__format": "boolean"
+        },
+        "retryStrategy": {
+          "retries": {
+            "__name": "APP_CLIENTS_OSM_SYNC_TRACKER_RETRY_RETRIES",
+            "__format": "number"
+          },
+          "shouldResetTimeout": {
+            "__name": "APP_CLIENTS_OSM_SYNC_TRACKER_RETRY_SHOULD_RESET_TIMEOUT",
+            "__format": "boolean"
+          },
+          "isExponential": {
+            "__name": "APP_CLIENTS_OSM_SYNC_TRACKER_RETRY_IS_EXPONENTIAL",
+            "__format": "boolean"
+          },
+          "delay": {
+            "__name": "APP_CLIENTS_OSM_SYNC_TRACKER_RETRY_DELAY",
+            "__format": "number"
+          }
+        },
+        "headers": {
+          "__name": "APP_CLIENTS_OSM_SYNC_TRACKER_HEADERS",
+          "__format": "json"
+        }
+      },
+      "changeMerger": {
+        "url": "APP_CLIENTS_CHANGE_MERGER_URL",
+        "timeout": {
+          "__name": "APP_CLIENTS_CHANGE_MERGER_TIMEOUT",
+          "__format": "number"
+        },
+        "enableRetryStrategy": {
+          "__name": "APP_CLIENTS_CHANGE_MERGER_ENABLE_RETRY_STRATEGY",
+          "__format": "boolean"
+        },
+        "retryStrategy": {
+          "retries": {
+            "__name": "APP_CLIENTS_CHANGE_MERGER_RETRY_RETRIES",
+            "__format": "number"
+          },
+          "shouldResetTimeout": {
+            "__name": "APP_CLIENTS_CHANGE_MERGER_RETRY_SHOULD_RESET_TIMEOUT",
+            "__format": "boolean"
+          },
+          "isExponential": {
+            "__name": "APP_CLIENTS_CHANGE_MERGER_RETRY_IS_EXPONENTIAL",
+            "__format": "boolean"
+          },
+          "delay": {
+            "__name": "APP_CLIENTS_CHANGE_MERGER_RETRY_DELAY",
+            "__format": "number"
+          }
+        },
+        "headers": {
+          "__name": "APP_CLIENTS_CHANGE_MERGER_HEADERS",
+          "__format": "json"
+        }
+      },
+      "idToOsm": {
+        "url": "APP_CLIENTS_ID_TO_OSM_URL",
+        "timeout": {
+          "__name": "APP_CLIENTS_ID_TO_OSM_TIMEOUT",
+          "__format": "number"
+        },
+        "enableRetryStrategy": {
+          "__name": "APP_CLIENTS_ID_TO_OSM_ENABLE_RETRY_STRATEGY",
+          "__format": "boolean"
+        },
+        "retryStrategy": {
+          "retries": {
+            "__name": "APP_CLIENTS_ID_TO_OSM_RETRY_RETRIES",
+            "__format": "number"
+          },
+          "shouldResetTimeout": {
+            "__name": "APP_CLIENTS_ID_TO_OSM_RETRY_SHOULD_RESET_TIMEOUT",
+            "__format": "boolean"
+          },
+          "isExponential": {
+            "__name": "APP_CLIENTS_ID_TO_OSM_RETRY_IS_EXPONENTIAL",
+            "__format": "boolean"
+          },
+          "delay": {
+            "__name": "APP_CLIENTS_ID_TO_OSM_RETRY_DELAY",
+            "__format": "number"
+          }
+        },
+        "headers": {
+          "__name": "APP_CLIENTS_ID_TO_OSM_HEADERS",
+          "__format": "json"
+        }
+      }
+    }
   },
   "redis": {
     "host": "REDIS_HOST",

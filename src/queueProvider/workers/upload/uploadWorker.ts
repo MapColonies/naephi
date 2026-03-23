@@ -2,8 +2,7 @@ import ioRedis from 'ioredis';
 import { injectable, inject } from 'tsyringe';
 import { type Logger } from '@map-colonies/js-logger';
 import { Registry } from 'prom-client';
-import { Job, UnrecoverableError } from 'bullmq';
-import { type AppConfig } from '@src/common/interfaces';
+import { Job, UnrecoverableError, WorkerOptions } from 'bullmq';
 import { ChangesetStatus, type IOsmAPI } from '@src/clients/osmAPI/types';
 import { SERVICES } from '@src/common/constants';
 import type { IChangeMerger, MergeRequest } from '@src/clients/changeMerger/types';
@@ -21,7 +20,8 @@ import {
   ChangesetTooLargeError,
 } from '@src/clients/osmAPI/errors';
 import { CLIENTS } from '@src/clients/constants';
-import { QueueEnum, WorkerEnum } from '../../constants';
+import type { ConfigType } from '@src/common/config';
+import { QueueEnum, QueueIdentifiers, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import type { IOsmIdResolver } from '../../../osmIdResolver/interfaces';
 import { ChangesetUploadData, ChangesetUploadReturn, CompleteChangesetIdentifiers } from './types';
@@ -38,7 +38,7 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
   public constructor(
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
-    @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
+    @inject(SERVICES.CONFIG) config: ConfigType,
     @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
     @inject(RedisClient) private readonly redis: RedisClient,
     @inject(SERVICES.OSM_ID_RESOLVER) private readonly osmIdResolver: IOsmIdResolver,
@@ -49,8 +49,10 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
     @inject(FlowManager) private readonly flowManager: FlowManager
   ) {
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_UPLOAD });
-    const { workerOptions } = appConfig;
-    super({ logger: workerLogger, metricsRegistry, connection, workerOptions });
+    const workerOptions = config.get(`app.queues.${QueueIdentifiers.CHANGESET_UPLOAD}.workerOptions`) as unknown as WorkerOptions;
+    const prefix = config.get('bullmq.keyPrefix');
+
+    super({ logger: workerLogger, metricsRegistry, connection, workerOptions: { ...workerOptions, prefix } });
 
     this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });
   }
@@ -72,7 +74,7 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
     const context: ChangesetContext = { changesetId, changesetOsmId, status, flowAttempt };
 
     switch (status) {
-      case ChangesetStatus.OPEN_AND_EMPTY:
+      case ChangesetStatus.OPEN_AND_EMPTY: {
         // 2. redis::GET {changesetId}
         const mergeRequest = await this.redis.get<MergeRequest>(changesetId);
 
@@ -116,13 +118,16 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
           throw error;
         }
         break;
+      }
       case ChangesetStatus.OPEN_AND_FULL:
-      case ChangesetStatus.CLOSED_AND_FULL:
+      case ChangesetStatus.CLOSED_AND_FULL: {
         this.handleFullChangeset(context);
         break;
-      case ChangesetStatus.CLOSED_AND_EMPTY:
-        this.handleClosedAndEmptyChangeset(context);
+      }
+      case ChangesetStatus.CLOSED_AND_EMPTY: {
+        await this.handleClosedAndEmptyChangeset(context);
         break;
+      }
     }
 
     // 5. publish cleanup jobs
@@ -149,7 +154,7 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
 
     await this.flowManager.initChangesetFlow({
       id: context.changesetId,
-      flowAttempt: (context.flowAttempt ?? 1) + 1,
+      flowAttempt: context.flowAttempt + 1,
     });
 
     throw new UnrecoverableError('flow is terminated, while another flow is attempted');

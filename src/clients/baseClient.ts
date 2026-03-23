@@ -2,11 +2,12 @@ import axios, { AxiosError, AxiosInstance, isAxiosError } from 'axios';
 import axiosRetry, { exponentialDelay, IAxiosRetryConfig } from 'axios-retry';
 import { Counter, Histogram, Registry } from 'prom-client';
 import { snakeCase } from 'change-case';
+import oAuth from 'oauth-1.0a';
 import { ILogger } from '@src/common/interfaces';
 import { MS_IN_SECOND, SNAKED_SERVICE_NAME } from '@src/common/constants';
 import { ClientConfig, ClientOptions, ErrorContext, RetryStrategy } from './options';
 import { Client, DEFAULT_RETRY_STRATEGY_DELAY } from './constants';
-import { applyBasicAuth, applyOAuth1, applyOAuth2, AuthConfig, AUTHORIZATION_HEADER, createOAuthSigner } from './auth';
+import { applyBasicAuth, applyOAuth1, applyOAuth2, AuthConfig, createOAuthSigner } from './auth';
 
 export abstract class BaseClient {
   protected readonly clientName: Client;
@@ -143,7 +144,7 @@ export abstract class BaseClient {
           applyBasicAuth(config, auth);
           break;
         case 'oauth1':
-          applyOAuth1(config, auth, oauthSigner!, this.options.url);
+          applyOAuth1(config, auth, oauthSigner as oAuth, this.options.url);
           break;
         case 'oauth2':
           applyOAuth2(config, auth);

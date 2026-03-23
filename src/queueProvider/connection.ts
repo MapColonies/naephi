@@ -4,7 +4,6 @@ import { CleanupRegistry } from '@map-colonies/cleanup-registry';
 import { constructConnectionOptions, redisQuitSafely } from '@src/redis/connection';
 import { ConfigType } from '../common/config';
 import { SERVICES } from '../common/constants';
-import { ExtendedRedisOptions } from '../common/interfaces';
 import { CONSTANT_BULLMQ_QUEUE_CONNECTION_OPTIONS, CONSTANT_BULLMQ_WORKER_CONNECTION_OPTIONS, BULLMQ_CONNECTION_OPTIONS_SYMBOL } from './constants';
 
 export const createBullMqConnectionOptionsFactory: FactoryFunction<RedisOptions> = (container) => {

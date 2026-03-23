@@ -1,6 +1,8 @@
 import { Job, Worker } from 'bullmq';
-import { BatchOptions, BatchWorkerOptions } from '../../options';
 import { DEFAULT_BATCH_OPTIONS } from '@src/queueProvider/constants';
+import { BatchOptions, BatchWorkerOptions } from '../../options';
+
+const DEFAULT_TIMEOUT_WINDOW_MULTIPLIER = 2;
 
 export class BatchWorker<DataType = unknown, NameType extends string = string> extends Worker<DataType, void, NameType> {
   private buffer: Job<DataType, void, NameType>[] = [];
@@ -30,7 +32,7 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
       {
         ...workerOptions,
         // ensure the worker's lockDuration is long enough to cover the batching window
-        lockDuration: Math.max(workerOptions.lockDuration ?? 0, batchOptions.timeout * 2),
+        lockDuration: Math.max(workerOptions.lockDuration ?? 0, batchOptions.timeout * DEFAULT_TIMEOUT_WINDOW_MULTIPLIER),
       }
     );
 

@@ -26,7 +26,7 @@ export const redisQuitSafely = async (redis: ioRedis): Promise<void> => {
 };
 
 export const constructConnectionOptions = (redisConfig: ExtendedRedisOptions): RedisOptions => {
-  const { host, port, enableSslAuth, sslPaths, ...clientOptions } = redisConfig;
+  const { host, port, enableSslAuth, sslPaths, keyPrefix, ...clientOptions } = redisConfig;
 
   const connectionOptions: RedisOptions = {
     host,

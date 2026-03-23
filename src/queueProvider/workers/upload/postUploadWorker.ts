@@ -9,12 +9,12 @@ import type { IChangeMerger } from '@src/clients/changeMerger/types';
 import type { IIdToOsm } from '@src/clients/idToOsm/types';
 import { IdConflictError } from '@src/clients/idToOsm/errors';
 import { CLIENTS } from '@src/clients/constants';
+import { type ConfigType } from '@src/common/config';
 import { QueueEnum, QueueIdentifiers, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import type { IOsmIdResolver } from '../../../osmIdResolver/interfaces';
 import { ChangesetUploadData } from './types';
 import { prepareEntityBulkRequest } from './util';
-import { type ConfigType } from '@src/common/config';
 
 @injectable()
 export class PostUploadWorker extends BullWorkerProvider<ChangesetUploadData, void> {
@@ -29,8 +29,9 @@ export class PostUploadWorker extends BullWorkerProvider<ChangesetUploadData, vo
     @inject(CLIENTS.OSM_SYNC_TRACKER) private readonly tracker: IOsmSyncTracker
   ) {
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_POST_UPLOAD });
-    const workerOptions = config.get(`app.${QueueIdentifiers.CHANGESET_POST_UPLOAD}.workerOptions`) as unknown as WorkerOptions;
+    const workerOptions = config.get(`app.queues.${QueueIdentifiers.CHANGESET_POST_UPLOAD}.workerOptions`) as unknown as WorkerOptions;
     const prefix = config.get('bullmq.keyPrefix');
+
     super({ logger: workerLogger, metricsRegistry, connection, workerOptions: { ...workerOptions, prefix } });
 
     this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });

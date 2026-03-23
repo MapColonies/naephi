@@ -65,7 +65,7 @@ export abstract class BullWorkerProvider<DataType = unknown, ReturnType = unknow
       throw err;
     }
 
-    void this.worker?.run().catch((err) => {
+    void this.worker?.run().catch((err: unknown) => {
       this.logger.error({ msg: 'worker process crashed unexpectedly', queueName: this.queueName, err });
     });
   }

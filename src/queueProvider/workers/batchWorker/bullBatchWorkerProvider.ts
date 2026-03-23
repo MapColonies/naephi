@@ -29,6 +29,7 @@ export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWo
     this.setupEventListenerts();
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   protected async processJob(job: Job<DataType, void>): Promise<void> {
     this.logger.error({ msg: UNSUPPORTED_PROCESS_JOB_MSG, jobId: job.id, queueName: this.queueName });
     throw new Error(UNSUPPORTED_PROCESS_JOB_MSG);

@@ -7,9 +7,6 @@ import { CLIENTS } from '@src/clients/constants';
 import { ChangesetUploadData } from '../queueProvider/workers/upload/types';
 import { IOsmIdResolver } from './interfaces';
 
-/**
- * Resolves changeset osm id by querying the source of truth in osm-sync-tracker
- */
 @injectable()
 export class TrackerOsmIdResolver implements IOsmIdResolver {
   public constructor(
@@ -24,7 +21,7 @@ export class TrackerOsmIdResolver implements IOsmIdResolver {
 
     const changeset = await this.tracker.getChangeset(changesetId);
 
-    if (!changeset?.osmId) {
+    if (changeset?.osmId === undefined) {
       this.logger.error({
         msg: 'failed to resolve osm id',
         resolver: 'tracker',
