@@ -1,5 +1,5 @@
 {{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
+{{- $chartName := include "naephi.name" . -}}
 {{- if and (.Values.enabled) (.Values.ingress.enabled) -}}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -8,7 +8,7 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.org/mergeable-ingress-type: "minion"
-    nginx.org/rewrites: 'serviceName={{ $releaseName }}-{{ $chartName }} rewrite=/'    
+    nginx.org/rewrites: 'serviceName={{ $releaseName }}-{{ $chartName }} rewrite=/'
     nginx.org/location-snippets: |
       if ($request_method = OPTIONS) {
         return 204;
@@ -27,7 +27,7 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: {{ printf "%s-service" (include "ts-server-boilerplate.fullname" .) }}
+            name: {{ printf "%s-service" (include "naephi.fullname" .) }}
             port:
               number: {{ .Values.env.port }}
     host: {{ .Values.ingress.host | quote }}

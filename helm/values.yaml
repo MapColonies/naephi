@@ -12,8 +12,8 @@ mclabels:
 
 enabled: true
 replicaCount: 1
-revisionHistoryLimit: 5  # Amount of revisions we keep
-nodePort: 30030  # for minikube deployment only
+revisionHistoryLimit: 5
+nodePort: 30030
 resetOnConfigChange: false
 
 nameOverride: ""
@@ -49,8 +49,6 @@ extraEnvVars: []
 
 command: []
 args: []
-# command: [ "/bin/sh", "-c", "--" ]
-# args: [ "while true; do sleep infinity; done;" ]
 
 sidecars: []
 
@@ -64,9 +62,7 @@ caPath: '/usr/local/share/ca-certificates'
 caKey: 'ca.crt'
 
 image:
-  repository: ts-server-boilerplate
-  # If commented, appVersion will be taken. See: _helpers.tpl
-  # tag: 'latest'
+  repository: naephi
   pullPolicy: IfNotPresent
 
 env:
@@ -83,6 +79,225 @@ env:
   metrics:
     enabled: false
     url: http://localhost:55681/v1/metrics
+  app:
+    uiPath: /ui
+    initTimeout: 30000
+    osmIdResolver: tracker
+    flows:
+      changesetUpload:
+        maxAttempts: 10
+    queues:
+      changesetPreUpload:
+        job:
+          attempts: 3
+          delay: 0
+          backoff:
+            type: exponential
+            delay: 1000
+        worker:
+          concurrency: 1
+          limiter:
+            enabled: false
+            max: 100
+            duration: 1000
+          maxStalledCount: 1
+          stalledInterval: 30000
+          removeOnComplete:
+            age: 3600
+            count: 1000
+          removeOnFail:
+            age: 2419200
+            # count: 100000
+      changesetUpload:
+        job:
+          attempts: 3
+          delay: 0
+          backoffType: exponential
+          backoffDelay: 1000
+        worker:
+          concurrency: 1
+          limiter:
+            enabled: false
+            max: 100
+            duration: 1000
+          maxStalledCount: 1
+          stalledInterval: 30000
+          removeOnComplete:
+            age: 3600
+            count: 1000
+          removeOnFail:
+            age: 2419200
+            # count: 100000
+      changesetPostUpload:
+        job:
+          attempts: 3
+          delay: 0
+          backoffType: exponential
+          backoffDelay: 1000
+        worker:
+          concurrency: 1
+          limiter:
+            enabled: false
+            max: 100
+            duration: 1000
+          maxStalledCount: 1
+          stalledInterval: 30000
+          removeOnComplete:
+            age: 3600
+            count: 1000
+          removeOnFail:
+            age: 2419200
+            # count: 100000
+      changesetClosure:
+        job:
+          attempts: 3
+          delay: 0
+          backoffType: exponential
+          backoffDelay: 1000
+        worker:
+          concurrency: 1
+          limiter:
+            enabled: false
+            max: 100
+            duration: 1000
+          maxStalledCount: 1
+          stalledInterval: 30000
+          removeOnComplete:
+            age: 3600
+            count: 1000
+          removeOnFail:
+            age: 2419200
+            # count: 100000
+        batch:
+          size: 10
+          minSize: 1
+          timeout: 5000
+      changesetRedisCleanup:
+        job:
+          attempts: 3
+          delay: 0
+          backoffType: exponential
+          backoffDelay: 1000
+        worker:
+          concurrency: 1
+          limiter:
+            enabled: false
+            max: 100
+            duration: 1000
+          maxStalledCount: 1
+          stalledInterval: 30000
+          removeOnComplete:
+            age: 3600
+            count: 1000
+          removeOnFail:
+            age: 2419200
+            # count: 100000
+        batch:
+          size: 10
+          minSize: 1
+          timeout: 5000
+      changesetOsmCleanup:
+        job:
+          attempts: 3
+          delay: 0
+          backoffType: exponential
+          backoffDelay: 1000
+        worker:
+          concurrency: 1
+          limiter:
+            enabled: false
+            max: 100
+            duration: 1000
+          maxStalledCount: 1
+          stalledInterval: 30000
+          removeOnComplete:
+            age: 3600
+            count: 1000
+          removeOnFail:
+            age: 2419200
+            # count: 100000
+        batch:
+          size: 10
+          minSize: 1
+          timeout: 5000
+    clients:
+      osmApi:
+        url: http://localhost:3000
+        timeout: 10000
+        retryStrategy:
+          enabled: false
+          # retries: 3
+          # shouldResetTimeout: false
+          # isExponential: false
+          # delay: 100
+        headers: '{}'
+        # auth:
+        #   type: oauth2
+        #   accessToken: ""
+        #   type: basic
+        #   username: ""
+        #   password: ""
+        #   type: oauth1
+        #   accessToken: ""
+        #   consumerKey: ""
+        #   consumerSecret: ""
+        #   accessTokenSecret: ""
+      osmSyncTracker:
+        url: http://localhost:3001
+        timeout: 10000
+        retryStrategy:
+          enabled: false
+          # retries: 3
+          # shouldResetTimeout: false
+          # isExponential: false
+          # delay: 100
+        headers: '{}'
+      changeMerger:
+        url: http://localhost:3002
+        timeout: 10000
+        retryStrategy:
+          enabled: false
+          # retries: 3
+          # shouldResetTimeout: false
+          # isExponential: false
+          # delay: 100
+        headers: '{}'
+      idToOsm:
+        url: http://localhost:3003
+        timeout: 10000
+        retryStrategy:
+          enabled: false
+          # retries: 3
+          # shouldResetTimeout: false
+          # isExponential: false
+          # delay: 100
+        headers: '{}'
+
+  redis:
+    host: localhost
+    port: 6379
+    username: ""
+    password: ""
+    db: 0
+    # keyPrefix: "{ingestion}"
+    enableSslAuth: false
+    sslPaths:
+      ca: ""
+      key: ""
+      cert: ""
+
+  bullmq:
+    host: localhost
+    port: 6380
+    username: ""
+    password: ""
+    db: 0
+    keyPrefix: "{naephi}"
+    enableSslAuth: false
+    sslPaths:
+      ca: ""
+      key: ""
+      cert: ""
 
 resources:
   enabled: true

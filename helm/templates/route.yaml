@@ -1,6 +1,6 @@
 {{- $releaseName := .Release.Name -}}
-{{- $chartName := include "ts-server-boilerplate.name" . -}}
-{{- $cloudProviderFlavor := include "ts-server-boilerplate.cloudProviderFlavor" . -}}
+{{- $chartName := include "naephi.name" . -}}
+{{- $cloudProviderFlavor := include "naephi.cloudProviderFlavor" . -}}
 {{- if and (and (.Values.enabled) (eq $cloudProviderFlavor "openshift")) (.Values.route.enabled) -}}
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -20,7 +20,7 @@ spec:
   path: {{ .Values.route.path | default "/" }}
   to:
     kind: Service
-    name: {{ printf "%s-service" (include "ts-server-boilerplate.fullname" .) }}
+    name: {{ printf "%s-service" (include "naephi.fullname" .) }}
   {{- if .Values.route.tls.enabled }}
   tls:
     termination: {{ .Values.route.tls.termination | quote }}
