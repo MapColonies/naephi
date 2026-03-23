@@ -5,47 +5,52 @@ import { createTerminus } from '@godaddy/terminus';
 import { Logger } from '@map-colonies/js-logger';
 import { DependencyContainer } from 'tsyringe';
 import { ConfigType } from '@common/config';
-// import { HEALTHCHECK, ON_SIGNAL, SERVICES, WORKERS_INITIALIZER } from './common/constants';
 import { HEALTHCHECK, ON_SIGNAL, SERVICES } from './common/constants';
 import { getApp } from './app';
+import { BULLMQ_WORKERS_INITIALIZER } from './queueProvider/constants';
+import { withTimeout } from './common/util';
 
-let depContainer: DependencyContainer | undefined;
+const WORKER_INIT_TIMEOUT_MS = 30000;
 
-void getApp()
-  // .then(async ({ app, container }) => {
-  .then(({ app, container }) => {
-    depContainer = container;
+const main = async (): Promise<void> => {
+  let container: DependencyContainer | undefined;
+  let logger: Logger | undefined;
+
+  try {
+    const { app, container: resolvedContainer } = await getApp();
+    container = resolvedContainer;
+
     const logger = container.resolve<Logger>(SERVICES.LOGGER);
     const config = container.resolve<ConfigType>(SERVICES.CONFIG);
     const port = config.get('server.port');
 
     const server = createTerminus(createServer(app), {
-      healthChecks: { '/liveness': depContainer.resolve(HEALTHCHECK) },
-      onSignal: depContainer.resolve(ON_SIGNAL),
+      healthChecks: { '/liveness': container.resolve(HEALTHCHECK) },
+      onSignal: container.resolve(ON_SIGNAL),
     });
 
     server.listen(port, () => {
       logger.info(`app started on port ${port}`);
     });
 
-    // const wokrersInit = depContainer.resolve<() => Promise<void>>(WORKERS_INITIALIZER);
-    // await wokrersInit();
-    // try {
-    //   await wokrersInit();
-    // } catch (error) {
-    //   logger.error({ msg: 'worker init failed', err: error });
-    // }
-  })
-  .catch(async (error: Error) => {
-    const errorLogger =
-      depContainer?.isRegistered(SERVICES.LOGGER) == true
-        ? depContainer.resolve<Logger>(SERVICES.LOGGER).error.bind(depContainer.resolve<Logger>(SERVICES.LOGGER))
-        : console.error;
-    errorLogger({ msg: '😢 - failed initializing the server', err: error });
+    const workersInit = container.resolve<() => Promise<void>>(BULLMQ_WORKERS_INITIALIZER);
+    try {
+      await withTimeout(workersInit(), WORKER_INIT_TIMEOUT_MS); // TODO: should be configurable
+    } catch (error) {
+      throw new Error(`worker initialization failed: ${(error as Error).message}`, { cause: error });
+    }
+  } catch (error) {
+    const logError = logger?.error.bind(logger) ?? console.error;
 
-    if (depContainer?.isRegistered(ON_SIGNAL) == true) {
-      const shutDown: () => Promise<void> = depContainer.resolve(ON_SIGNAL);
+    logError({ msg: 'failed initializing the server', err: error });
+
+    if (container?.isRegistered(ON_SIGNAL) === true) {
+      const shutDown = container.resolve<() => Promise<void>>(ON_SIGNAL);
       await shutDown();
     }
+
     process.exit(1);
-  });
+  }
+};
+
+void main();

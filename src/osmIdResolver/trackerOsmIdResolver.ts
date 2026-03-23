@@ -3,6 +3,7 @@ import { inject, injectable } from 'tsyringe';
 import { type Logger } from '@map-colonies/js-logger';
 import { SERVICES } from '@src/common/constants';
 import type { IOsmSyncTracker } from '@src/clients/osmSyncTracker/types';
+import { CLIENTS } from '@src/clients/constants';
 import { ChangesetUploadData } from '../queueProvider/workers/upload/types';
 import { IOsmIdResolver } from './interfaces';
 
@@ -12,7 +13,7 @@ import { IOsmIdResolver } from './interfaces';
 @injectable()
 export class TrackerOsmIdResolver implements IOsmIdResolver {
   public constructor(
-    @inject(SERVICES.OSM_SYNC_TRACKER_CLIENT) private readonly tracker: IOsmSyncTracker,
+    @inject(CLIENTS.OSM_SYNC_TRACKER) private readonly tracker: IOsmSyncTracker,
     @inject(SERVICES.LOGGER) private readonly logger: Logger
   ) {}
 

@@ -2,10 +2,10 @@ import { Counter, Histogram, Registry } from 'prom-client';
 import { Job, Worker, WorkerOptions } from 'bullmq';
 import ioRedis from 'ioredis';
 import { snakeCase } from 'change-case';
-import { MS_IN_SECOND, SERVICE_NAME } from '@src/common/constants';
+import { MS_IN_SECOND, SNAKED_SERVICE_NAME } from '@src/common/constants';
 import { ILogger } from '@src/common/interfaces';
 import { WorkerProviderOptions } from '../options';
-import { QueueEnum, QUEUE_KEY_PREFIX } from '../constants';
+import { QueueEnum, BULLMQ_KEY_PREFIX } from '../constants';
 import { bullMqOtelFactory } from '../telemetry';
 
 export abstract class BullWorkerProvider<DataType = unknown, ReturnType = unknown> {
@@ -28,20 +28,20 @@ export abstract class BullWorkerProvider<DataType = unknown, ReturnType = unknow
 
     if (this.metricsRegistry !== undefined) {
       this.porcessingHistogram = new Histogram({
-        name: `${SERVICE_NAME}_${snakeCase(this.queueName)}_job_processing_duration_seconds`,
+        name: `${SNAKED_SERVICE_NAME}_${snakeCase(this.queueName)}_job_processing_duration_seconds`,
         help: `Job processing duration`,
         registers: [this.metricsRegistry],
       });
 
       this.jobCounter = new Counter({
-        name: `${SERVICE_NAME}_${snakeCase(this.queueName)}_job_count`,
+        name: `${SNAKED_SERVICE_NAME}_${snakeCase(this.queueName)}_job_count`,
         help: 'Job processing counter by resulted event',
         labelNames: ['status'] as const,
         registers: [this.metricsRegistry],
       });
 
       this.internalErrorCounter = new Counter({
-        name: `${SERVICE_NAME}_${snakeCase(this.queueName)}_internal_error_total`,
+        name: `${SNAKED_SERVICE_NAME}_${snakeCase(this.queueName)}_internal_error_total`,
         help: 'The total number of internal errors occured while job processing',
         registers: [this.metricsRegistry],
       });
@@ -58,12 +58,16 @@ export abstract class BullWorkerProvider<DataType = unknown, ReturnType = unknow
     }
 
     try {
-      await this.worker?.run();
+      await this.worker?.waitUntilReady();
       this.logger.info({ msg: 'worker started consuming successfully', queueName: this.queueName });
     } catch (err) {
       this.logger.error({ msg: 'failed to start worker', queueName: this.queueName, err });
       throw err;
     }
+
+    void this.worker?.run().catch((err) => {
+      this.logger.error({ msg: 'worker process crashed unexpectedly', queueName: this.queueName, err });
+    });
   }
 
   public async close(): Promise<void> {
@@ -123,7 +127,7 @@ export abstract class BullWorkerProvider<DataType = unknown, ReturnType = unknow
     const workerConstructorOptions = {
       ...this.workerOptions,
       connection: this.connection,
-      prefix: QUEUE_KEY_PREFIX,
+      prefix: BULLMQ_KEY_PREFIX,
       autorun: false,
       telemetry: bullMqOtelFactory(),
     };

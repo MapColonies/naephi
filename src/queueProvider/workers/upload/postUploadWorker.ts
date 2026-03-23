@@ -2,34 +2,36 @@ import ioRedis from 'ioredis';
 import { injectable, inject } from 'tsyringe';
 import { type Logger } from '@map-colonies/js-logger';
 import { Registry } from 'prom-client';
-import { Job, UnrecoverableError } from 'bullmq';
-import { type AppConfig } from '@src/common/interfaces';
+import { Job, UnrecoverableError, WorkerOptions } from 'bullmq';
 import type { IOsmSyncTracker } from '@src/clients/osmSyncTracker/types';
 import { SERVICES } from '@src/common/constants';
 import type { IChangeMerger } from '@src/clients/changeMerger/types';
 import type { IIdToOsm } from '@src/clients/idToOsm/types';
 import { IdConflictError } from '@src/clients/idToOsm/errors';
-import { QueueEnum, WorkerEnum } from '../../constants';
+import { CLIENTS } from '@src/clients/constants';
+import { QueueEnum, QueueIdentifiers, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import type { IOsmIdResolver } from '../../../osmIdResolver/interfaces';
 import { ChangesetUploadData } from './types';
 import { prepareEntityBulkRequest } from './util';
+import { type ConfigType } from '@src/common/config';
 
 @injectable()
 export class PostUploadWorker extends BullWorkerProvider<ChangesetUploadData, void> {
   public constructor(
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
-    @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
-    @inject(SERVICES.REDIS_WORKER_CONNECTION) connection: ioRedis,
+    @inject(SERVICES.CONFIG) config: ConfigType,
+    @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
     @inject(SERVICES.OSM_ID_RESOLVER) private readonly osmIdResolver: IOsmIdResolver,
-    @inject(SERVICES.CHANGE_MERGER_CLIENT) private readonly changeMerger: IChangeMerger,
-    @inject(SERVICES.ID_TO_OSM_CLIENT) private readonly idToOsm: IIdToOsm,
-    @inject(SERVICES.OSM_SYNC_TRACKER_CLIENT) private readonly tracker: IOsmSyncTracker
+    @inject(CLIENTS.CHANGE_MERGER) private readonly changeMerger: IChangeMerger,
+    @inject(CLIENTS.ID_TO_OSM) private readonly idToOsm: IIdToOsm,
+    @inject(CLIENTS.OSM_SYNC_TRACKER) private readonly tracker: IOsmSyncTracker
   ) {
-    const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_PRE_UPLOAD });
-    const { workerOptions } = appConfig;
-    super({ logger: workerLogger, metricsRegistry, connection, workerOptions });
+    const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_POST_UPLOAD });
+    const workerOptions = config.get(`app.${QueueIdentifiers.CHANGESET_POST_UPLOAD}.workerOptions`) as unknown as WorkerOptions;
+    const prefix = config.get('bullmq.keyPrefix');
+    super({ logger: workerLogger, metricsRegistry, connection, workerOptions: { ...workerOptions, prefix } });
 
     this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });
   }

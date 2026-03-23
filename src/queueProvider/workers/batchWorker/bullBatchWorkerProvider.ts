@@ -1,9 +1,11 @@
 import { Job } from 'bullmq';
-import { BatchWorkerOptions, BatchWorkerProviderOptions } from '../options';
-import { QUEUE_KEY_PREFIX } from '../constants';
-import { bullMqOtelFactory } from '../telemetry';
-import { BullWorkerProvider } from './bullWorkerProvider';
+import { BatchWorkerOptions, BatchWorkerProviderOptions } from '../../options';
+import { BULLMQ_KEY_PREFIX } from '../../constants';
+import { bullMqOtelFactory } from '../../telemetry';
+import { BullWorkerProvider } from '../bullWorkerProvider';
 import { BatchWorker } from './batchWorker';
+
+const UNSUPPORTED_PROCESS_JOB_MSG = 'processJob called on a BatchWorker. processBatch should be used instead.';
 
 export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWorkerProvider<DataType, void> {
   protected override readonly workerOptions: BatchWorkerOptions;
@@ -17,7 +19,7 @@ export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWo
     const workerConstructorOptions = {
       ...this.workerOptions,
       connection: this.connection,
-      prefix: QUEUE_KEY_PREFIX,
+      prefix: BULLMQ_KEY_PREFIX,
       autorun: false,
       telemetry: bullMqOtelFactory(),
     };
@@ -28,7 +30,8 @@ export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWo
   }
 
   protected async processJob(job: Job<DataType, void>): Promise<void> {
-    throw new Error('processJob called on a BatchWorker. processBatch should be used instead.');
+    this.logger.error({ msg: UNSUPPORTED_PROCESS_JOB_MSG, jobId: job.id, queueName: this.queueName });
+    throw new Error(UNSUPPORTED_PROCESS_JOB_MSG);
   }
 
   protected abstract processBatch(jobs: Job<DataType, void>[]): Promise<void>;

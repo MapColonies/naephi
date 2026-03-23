@@ -1,9 +1,10 @@
 import { Redis } from 'ioredis';
 import { Counter, Registry } from 'prom-client';
-import { inject, injectable } from 'tsyringe';
+import { inject, injectable, singleton } from 'tsyringe';
 import type { ILogger } from '@src/common/interfaces';
-import { SERVICE_NAME, SERVICES } from '@src/common/constants';
+import { SNAKED_SERVICE_NAME, SERVICES } from '@src/common/constants';
 
+@singleton()
 @injectable()
 export class RedisClient {
   private readonly commandsCounter?: Counter;
@@ -15,7 +16,7 @@ export class RedisClient {
   ) {
     if (metricsRegistry !== undefined) {
       this.commandsCounter = new Counter({
-        name: `${SERVICE_NAME}_redis_commands_total`,
+        name: `${SNAKED_SERVICE_NAME}_redis_commands_total`,
         help: 'Total number of executed redis commands',
         labelNames: ['command', 'status'],
         registers: [metricsRegistry],

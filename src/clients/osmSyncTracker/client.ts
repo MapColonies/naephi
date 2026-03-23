@@ -1,14 +1,25 @@
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { isAxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
+import type { Logger } from '@map-colonies/js-logger';
+import { Registry } from 'prom-client';
+import { SERVICES } from '@src/common/constants';
+import type { ConfigType } from '@src/common/config';
 import { BaseClient } from '../baseClient';
-import type { ClientConfig } from '../options';
+import type { ClientOptions } from '../options';
+import { CLIENTS } from '../constants';
 import { Changeset, ChangesetPatchRequest, PatchEntitiesRequest, IOsmSyncTracker } from './types';
 
 @injectable()
 export class OsmSyncTrackerClient extends BaseClient implements IOsmSyncTracker {
-  public constructor(clientConfig: ClientConfig) {
-    super(clientConfig);
+  public constructor(
+    @inject(SERVICES.CONFIG) config: ConfigType,
+    @inject(SERVICES.LOGGER) logger: Logger,
+    @inject(SERVICES.METRICS) metricsRegistry: Registry
+  ) {
+    const options = config.get(`app.clients.${CLIENTS.OSM_SYNC_TRACKER}`) as unknown as ClientOptions;
+    const clientLogger = logger.child({ component: CLIENTS.OSM_SYNC_TRACKER });
+    super({ clientName: CLIENTS.OSM_SYNC_TRACKER, ...options, logger: clientLogger, metricsRegistry });
   }
 
   public async patchEntities(request: PatchEntitiesRequest): Promise<void> {

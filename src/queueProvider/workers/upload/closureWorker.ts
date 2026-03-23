@@ -6,8 +6,9 @@ import { Job } from 'bullmq';
 import { type AppConfig } from '@src/common/interfaces';
 import type { IOsmSyncTracker } from '@src/clients/osmSyncTracker/types';
 import { SERVICES } from '@src/common/constants';
+import { CLIENTS } from '@src/clients/constants';
 import { QueueEnum, WorkerEnum } from '../../constants';
-import { BullBatchWorkerProvider } from '../bullBatchWorkerProvider';
+import { BullBatchWorkerProvider } from '../batchWorker/bullBatchWorkerProvider';
 import { ChangesetUploadData } from './types';
 
 @injectable()
@@ -16,9 +17,10 @@ export class ClosureWorker extends BullBatchWorkerProvider<ChangesetUploadData> 
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
     @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
-    @inject(SERVICES.REDIS_WORKER_CONNECTION) connection: ioRedis,
-    @inject(SERVICES.OSM_SYNC_TRACKER_CLIENT) private readonly tracker: IOsmSyncTracker
+    @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
+    @inject(CLIENTS.OSM_SYNC_TRACKER) private readonly tracker: IOsmSyncTracker
   ) {
+    // TODO: should inject config only for the prefix?
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_CLOSURE });
     const { workerOptions } = appConfig;
     super({ logger: workerLogger, metricsRegistry, connection, workerOptions });

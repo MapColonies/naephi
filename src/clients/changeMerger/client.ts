@@ -1,13 +1,24 @@
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
 import { stringify } from 'qs';
+import type { Logger } from '@map-colonies/js-logger';
+import { Registry } from 'prom-client';
+import { SERVICES } from '@src/common/constants';
+import type { ConfigType } from '@src/common/config';
 import { BaseClient } from '../baseClient';
-import type { ClientConfig } from '../options';
+import type { ClientOptions } from '../options';
+import { CLIENTS } from '../constants';
 import { Action, IChangeMerger, InterpretResult, MergeRequest, MergeResponse, Remote } from './types';
 
 @injectable()
 export class ChangeMergerClient extends BaseClient implements IChangeMerger {
-  public constructor(clientConfig: ClientConfig) {
-    super(clientConfig);
+  public constructor(
+    @inject(SERVICES.CONFIG) config: ConfigType,
+    @inject(SERVICES.LOGGER) logger: Logger,
+    @inject(SERVICES.METRICS) metricsRegistry: Registry
+  ) {
+    const options = config.get(`app.clients.${CLIENTS.CHANGE_MERGER}`) as unknown as ClientOptions;
+    const clientLogger = logger.child({ component: CLIENTS.CHANGE_MERGER });
+    super({ clientName: CLIENTS.CHANGE_MERGER, ...options, logger: clientLogger, metricsRegistry });
   }
 
   public async merge(request: MergeRequest): Promise<MergeResponse> {

@@ -1,9 +1,9 @@
 import { type ConfigInstance, config } from '@map-colonies/config';
 import { commonBoilerplateV2, type commonBoilerplateV2Type } from '@map-colonies/schemas';
-import { AppConfig } from './interfaces';
+import { AppConfig, ExtendedRedisOptions } from './interfaces';
 
 // Choose here the type of the config instance and import this type from the entire application
-type ConfigType = ConfigInstance<commonBoilerplateV2Type & { app?: AppConfig }>;
+type ConfigType = ConfigInstance<commonBoilerplateV2Type & { redis?: ExtendedRedisOptions; bullmq?: ExtendedRedisOptions; app?: AppConfig }>;
 
 let configInstance: ConfigType | undefined;
 

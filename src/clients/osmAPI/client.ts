@@ -1,9 +1,13 @@
 import { isAxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
-import { injectable } from 'tsyringe';
-import { SERVICE_NAME } from '@src/common/constants';
+import { inject, injectable, singleton } from 'tsyringe';
+import type { Logger } from '@map-colonies/js-logger';
+import { Registry } from 'prom-client';
+import { SERVICE_NAME, SERVICES } from '@src/common/constants';
+import type { ConfigType } from '@src/common/config';
 import { BaseClient } from '../baseClient';
-import type { ClientConfig } from '../options';
+import type { ClientOptions } from '../options';
+import { CLIENTS } from '../constants';
 import { ChangesetCreateRequest, IOsmAPI, OsmChangesetResponse } from './types';
 import {
   ChangesetAlreadyClosedError,
@@ -17,9 +21,15 @@ import {
 } from './errors';
 
 @injectable()
-export class OsmAPI extends BaseClient implements IOsmAPI {
-  public constructor(clientConfig: ClientConfig) {
-    super(clientConfig);
+export class OsmApiClient extends BaseClient implements IOsmAPI {
+  public constructor(
+    @inject(SERVICES.CONFIG) config: ConfigType,
+    @inject(SERVICES.LOGGER) logger: Logger,
+    @inject(SERVICES.METRICS) metricsRegistry: Registry
+  ) {
+    const options = config.get(`app.clients.${CLIENTS.OSM_API}`) as unknown as ClientOptions;
+    const clientLogger = logger.child({ component: CLIENTS.OSM_API });
+    super({ clientName: CLIENTS.OSM_API, ...options, logger: clientLogger, metricsRegistry });
   }
 
   public async createChangeset(request: ChangesetCreateRequest): Promise<number> {

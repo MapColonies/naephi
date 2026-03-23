@@ -1,4 +1,4 @@
-import { FlowProducer, Queue, WorkerOptions } from 'bullmq';
+import { FlowProducer, JobsOptions, Queue, WorkerOptions } from 'bullmq';
 import ioRedis from 'ioredis';
 import { Registry } from 'prom-client';
 import { ILogger } from '@src/common/interfaces';
@@ -23,16 +23,24 @@ export interface WorkerProviderOptions extends BaseOptions {
 }
 
 export interface BatchOptions {
-  size: number; // Max size to force an immediate flush
-  minSize: number; // Minimum jobs required to flush when the timer hits
-  timeout: number; // Time in ms to wait before attempting a flush
+  /** Maximum batch size that triggers an immediate flush, bypassing the timer. */
+  size: number;
+  /** Minimum number of jobs required to flush when the timer fires. */
+  minSize: number;
+  /** Duration in milliseconds to wait before attempting a flush. */
+  timeout: number;
 }
 
 export interface BatchWorkerOptions extends WorkerOptions {
-  // TODO: extend BaseOptions
   batch?: Partial<BatchOptions>;
 }
 
 export interface BatchWorkerProviderOptions extends WorkerProviderOptions {
   batch?: Partial<BatchOptions>;
+}
+
+export interface QueueOptions {
+  jobOptions: JobsOptions;
+  workerOptions: WorkerOptions;
+  batchOptions?: BatchOptions;
 }

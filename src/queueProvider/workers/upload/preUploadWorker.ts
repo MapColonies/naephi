@@ -12,6 +12,7 @@ import { DEFAULT_CREATE_CHANGESET_TAGS } from '@src/clients/osmAPI/constants';
 import { RedisClient } from '@src/redis/client';
 import { determineChangesetStatus } from '@src/clients/osmAPI/helpers';
 import { ChangesetNotFoundError } from '@src/clients/osmAPI/errors';
+import { CLIENTS } from '@src/clients/constants';
 import { QueueEnum, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import { ChangesetUploadData, ChangesetUploadReturn } from './types';
@@ -22,10 +23,10 @@ export class PreUploadWorker extends BullWorkerProvider<ChangesetUploadData, Cha
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
     @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
-    @inject(SERVICES.REDIS_WORKER_CONNECTION) connection: ioRedis,
+    @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
     @inject(RedisClient) private readonly redis: RedisClient,
-    @inject(SERVICES.OSM_API_CLIENT) private readonly osmApi: IOsmAPI,
-    @inject(SERVICES.OSM_SYNC_TRACKER_CLIENT) private readonly tracker: IOsmSyncTracker
+    @inject(CLIENTS.OSM_API) private readonly osmApi: IOsmAPI,
+    @inject(CLIENTS.OSM_SYNC_TRACKER) private readonly tracker: IOsmSyncTracker
   ) {
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_PRE_UPLOAD });
     const { workerOptions } = appConfig;

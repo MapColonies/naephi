@@ -7,8 +7,9 @@ import { type AppConfig } from '@src/common/interfaces';
 import { SERVICES } from '@src/common/constants';
 import type { IOsmAPI } from '@src/clients/osmAPI/types';
 import { ChangesetCloseConflictError, ChangesetNotFoundError } from '@src/clients/osmAPI/errors';
+import { CLIENTS } from '@src/clients/constants';
 import { QueueEnum, WorkerEnum } from '../../constants';
-import { BullBatchWorkerProvider } from '../bullBatchWorkerProvider';
+import { BullBatchWorkerProvider } from '../batchWorker/bullBatchWorkerProvider';
 import { CompleteChangesetIdentifiers } from './types';
 
 @injectable()
@@ -17,8 +18,8 @@ export class OsmCleanupWorker extends BullBatchWorkerProvider<CompleteChangesetI
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
     @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
-    @inject(SERVICES.REDIS_WORKER_CONNECTION) connection: ioRedis,
-    @inject(SERVICES.OSM_API_CLIENT) private readonly osmApi: IOsmAPI
+    @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
+    @inject(CLIENTS.OSM_API) private readonly osmApi: IOsmAPI
   ) {
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_OSM_CLEANUP });
     const { workerOptions } = appConfig;

@@ -1,5 +1,8 @@
-import { WorkerOptions } from 'bullmq';
+import { QueueOptions, WorkerOptions } from 'bullmq';
 import { RedisOptions } from 'ioredis';
+import { Client } from '@src/clients/constants';
+import { ClientOptions } from '@src/clients/options';
+import { QueueId } from '@src/queueProvider/constants';
 
 interface LogFn {
   (obj: unknown, msg?: string, ...args: unknown[]): void;
@@ -29,6 +32,12 @@ export type ExtendedRedisOptions = {
 
 export interface AppConfig {
   uiPath: string;
-  workerOptions: WorkerOptions;
   osmIdResolver: 'tracker' | 'childJob';
+  workerOptions: WorkerOptions;
+  queues: {
+    [key in QueueId]: QueueOptions;
+  };
+  clients: {
+    [key in Client]: ClientOptions;
+  };
 }

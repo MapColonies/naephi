@@ -20,6 +20,7 @@ import {
   ChangesetPreconditionError,
   ChangesetTooLargeError,
 } from '@src/clients/osmAPI/errors';
+import { CLIENTS } from '@src/clients/constants';
 import { QueueEnum, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import type { IOsmIdResolver } from '../../../osmIdResolver/interfaces';
@@ -38,11 +39,11 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
     @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
-    @inject(SERVICES.REDIS_WORKER_CONNECTION) connection: ioRedis,
+    @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
     @inject(RedisClient) private readonly redis: RedisClient,
     @inject(SERVICES.OSM_ID_RESOLVER) private readonly osmIdResolver: IOsmIdResolver,
-    @inject(SERVICES.OSM_API_CLIENT) private readonly osmApi: IOsmAPI,
-    @inject(SERVICES.CHANGE_MERGER_CLIENT) private readonly changeMerger: IChangeMerger,
+    @inject(CLIENTS.OSM_API) private readonly osmApi: IOsmAPI,
+    @inject(CLIENTS.CHANGE_MERGER) private readonly changeMerger: IChangeMerger,
     @inject(QueueEnum.CHANGESET_REDIS_CLEANUP) private readonly redisCleanupQueue: JobQueueProvider<CompleteChangesetIdentifiers>,
     @inject(QueueEnum.CHANGESET_OSM_CLEANUP) private readonly osmCleanupQueue: JobQueueProvider<CompleteChangesetIdentifiers>,
     @inject(FlowManager) private readonly flowManager: FlowManager

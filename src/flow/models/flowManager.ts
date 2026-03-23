@@ -1,7 +1,7 @@
 import type { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { SERVICES } from '@common/constants';
-import { BULL_FLOW_PRODUCER_SYMBOL, JOB_SUFFIX_MAP, QueueEnum } from '@src/queueProvider/constants';
+import { BULLMQ_FLOW_PRODUCER_SYMBOL, JOB_SUFFIX_MAP, QueueEnum } from '@src/queueProvider/constants';
 import type { FlowProducerProvider } from '@src/queueProvider/queues/interfaces';
 
 export interface ChangesetFlowPayload {
@@ -13,7 +13,7 @@ export interface ChangesetFlowPayload {
 export class FlowManager {
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
-    @inject(BULL_FLOW_PRODUCER_SYMBOL) private readonly flowProducer: FlowProducerProvider
+    @inject(BULLMQ_FLOW_PRODUCER_SYMBOL) private readonly flowProducer: FlowProducerProvider
   ) {}
 
   public async initChangesetFlow(payload: ChangesetFlowPayload): Promise<void> {

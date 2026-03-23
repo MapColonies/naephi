@@ -1,5 +1,6 @@
 import { Job, Worker } from 'bullmq';
-import { BatchOptions, BatchWorkerOptions } from '../options';
+import { BatchOptions, BatchWorkerOptions } from '../../options';
+import { DEFAULT_BATCH_OPTIONS } from '@src/queueProvider/constants';
 
 export class BatchWorker<DataType = unknown, NameType extends string = string> extends Worker<DataType, void, NameType> {
   private buffer: Job<DataType, void, NameType>[] = [];
@@ -11,9 +12,8 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
     const { batch, ...workerOptions } = options;
 
     const batchOptions: BatchOptions = {
-      size: batch?.size ?? 10,
-      minSize: batch?.minSize ?? 1,
-      timeout: batch?.timeout ?? 5000,
+      ...DEFAULT_BATCH_OPTIONS,
+      ...batch,
     };
 
     super(
@@ -29,18 +29,15 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
       },
       {
         ...workerOptions,
-        // Ensure lockDuration is long enough to cover the batching window
-        lockDuration: Math.max(
-          30000, // TODO: make configurable
-          batchOptions.timeout * 2
-        ),
+        // ensure the worker's lockDuration is long enough to cover the batching window
+        lockDuration: Math.max(workerOptions.lockDuration ?? 0, batchOptions.timeout * 2),
       }
     );
 
     this.batchOptions = batchOptions;
     this.processor = processor;
 
-    // Remove jobs from local buffer if they are stalled/reclaimed by another worker
+    // remove jobs from local buffer if they are stalled/reclaimed by another worker
     this.on('stalled', (jobId) => {
       this.buffer = this.buffer.filter((job) => job.id !== jobId);
     });
@@ -54,9 +51,6 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
     await super.close(force);
   }
 
-  /**
-   * Starts or maintains the timeout timer for the current batch.
-   */
   private startTimer(): void {
     this.timer ??= setTimeout(() => {
       void this.flush();
@@ -71,27 +65,31 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
 
     if (this.buffer.length === 0) return;
 
-    // Check if we meet the minimum requirement to flush on timeout
+    // check if we meet the minimum requirement to flush on timeout
     if (this.buffer.length < this.batchOptions.minSize) {
-      // If not enough jobs, restart timer and keep waiting
+      // if not enough jobs, restart timer and keep waiting
       this.startTimer();
       return;
     }
 
-    // Snapshot the buffer and clear it to prevent race conditions during async processing
+    // snapshot the buffer and clear it to prevent race conditions during async processing
     const jobsToProcess = [...this.buffer];
     this.buffer = [];
 
     try {
-      // Execute the user-provided batch logic
+      // execute the user-provided batch logic
       await this.processor(jobsToProcess);
 
-      // Manually complete all jobs in the batch
+      // manually complete all jobs in the batch
       await Promise.all(jobsToProcess.map(async (job) => job.moveToCompleted(undefined, job.token!)));
     } catch (err) {
-      console.error('BatchWorker: Processing failed, failing all jobs in batch.', err);
+      console.error({
+        msg: 'BatchWorker: processing failed to at least one job in the batch, failing all jobs in batch.',
+        err,
+        batchSize: jobsToProcess.length,
+      });
 
-      // Move all jobs to failed state if the batch processor throws
+      // manually move all jobs to failed state if the batch processor throws
       await Promise.all(jobsToProcess.map(async (job) => job.moveToFailed(err as Error, job.token!)));
     }
   }

@@ -6,7 +6,7 @@ import ioRedis from 'ioredis';
 import { inject, injectable } from 'tsyringe';
 import { SERVICES } from '@src/common/constants';
 import { type ConfigType } from '@src/common/config';
-import { QUEUE_KEY_PREFIX, QueueEnum } from '../constants';
+import { BULLMQ_KEY_PREFIX, QueueEnum } from '../constants';
 
 @injectable()
 export class BullBoard {
@@ -14,7 +14,7 @@ export class BullBoard {
 
   public constructor(
     @inject(SERVICES.CONFIG) private readonly config: ConfigType,
-    @inject(SERVICES.REDIS_QUEUE_CONNECTION) private readonly redisConnection: ioRedis
+    @inject(SERVICES.BULLMQ_QUEUE_CONNECTION) private readonly redisConnection: ioRedis
   ) {
     const uiPath = this.config.get('app.uiPath') as string;
     this.serverAdapter = new ExpressAdapter();
@@ -23,7 +23,7 @@ export class BullBoard {
 
   public getBullBoardRouter(): ReturnType<ExpressAdapter['getRouter']> {
     const queues = Object.values(QueueEnum).map(
-      (queueName) => new BullQueue(queueName, { connection: this.redisConnection, prefix: QUEUE_KEY_PREFIX })
+      (queueName) => new BullQueue(queueName, { connection: this.redisConnection, prefix: BULLMQ_KEY_PREFIX })
     );
 
     createBullBoard({

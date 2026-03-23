@@ -7,16 +7,16 @@ import { type AppConfig } from '@src/common/interfaces';
 import { SERVICES } from '@src/common/constants';
 import { RedisClient } from '@src/redis/client';
 import { QueueEnum, WorkerEnum } from '../../constants';
-import { BullBatchWorkerProvider } from '../bullBatchWorkerProvider';
+import { BullBatchWorkerProvider } from '../batchWorker/bullBatchWorkerProvider';
 import { CompleteChangesetIdentifiers } from './types';
 
 @injectable()
-export class OsmCleanupWorker extends BullBatchWorkerProvider<CompleteChangesetIdentifiers> {
+export class RedisCleanupWorker extends BullBatchWorkerProvider<CompleteChangesetIdentifiers> {
   public constructor(
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
     @inject(SERVICES.APP_CONFIG) appConfig: AppConfig,
-    @inject(SERVICES.REDIS_WORKER_CONNECTION) connection: ioRedis,
+    @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
     @inject(RedisClient) private readonly redis: RedisClient
   ) {
     const workerLogger = logger.child({ component: WorkerEnum.CHANGESET_REDIS_CLEANUP });

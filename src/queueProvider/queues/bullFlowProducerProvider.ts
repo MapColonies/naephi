@@ -2,7 +2,7 @@ import { injectable } from 'tsyringe';
 import { FlowJob, FlowOpts, FlowProducer, JobNode } from 'bullmq';
 import { Counter, Registry } from 'prom-client';
 import { ILogger } from '@src/common/interfaces';
-import { SERVICE_NAME } from '@src/common/constants';
+import { SNAKED_SERVICE_NAME } from '@src/common/constants';
 import { type FlowProducerOptions } from '../options';
 import { FlowProducerProvider } from './interfaces';
 
@@ -24,7 +24,7 @@ export class BullFlowProducerProvider implements FlowProducerProvider {
 
     if (this.metricsRegistry !== undefined) {
       this.addedCounter = new Counter({
-        name: `${SERVICE_NAME}_flows_total_added_count`,
+        name: `${SNAKED_SERVICE_NAME}_flows_total_added_count`,
         help: 'The total number of added flows',
         registers: [this.metricsRegistry],
       });

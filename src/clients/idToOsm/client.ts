@@ -1,15 +1,26 @@
 import { isAxiosError } from 'axios';
 import { StatusCodes } from 'http-status-codes';
-import { injectable } from 'tsyringe';
+import { inject, injectable } from 'tsyringe';
+import type { Logger } from '@map-colonies/js-logger';
+import { Registry } from 'prom-client';
+import { SERVICES } from '@src/common/constants';
+import type { ConfigType } from '@src/common/config';
 import { BaseClient } from '../baseClient';
-import type { ClientConfig } from '../options';
+import type { ClientOptions } from '../options';
+import { CLIENTS } from '../constants';
 import { EntityBulkRequest, IIdToOsm } from './types';
 import { IdConflictError } from './errors';
 
 @injectable()
 export class IdToOsmClient extends BaseClient implements IIdToOsm {
-  public constructor(clientConfig: ClientConfig) {
-    super(clientConfig);
+  public constructor(
+    @inject(SERVICES.CONFIG) config: ConfigType,
+    @inject(SERVICES.LOGGER) logger: Logger,
+    @inject(SERVICES.METRICS) metricsRegistry: Registry
+  ) {
+    const options = config.get(`app.clients.${CLIENTS.ID_TO_OSM}`) as unknown as ClientOptions;
+    const clientLogger = logger.child({ component: CLIENTS.ID_TO_OSM });
+    super({ clientName: CLIENTS.ID_TO_OSM, ...options, logger: clientLogger, metricsRegistry });
   }
 
   public async bulk(request: EntityBulkRequest): Promise<void> {
