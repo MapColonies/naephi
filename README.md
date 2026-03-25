@@ -5,7 +5,7 @@
     2. a polar coordinate.
     3. in mathematics, the Greek letter φ denotes the golden ratio.
 
-`naephi` leverages `BullMQ` flow to build an `OSM` `changeset` upload flow, that is being processed in 4 stages:
+`naephi` leverages `BullMQ` flow to build an `OSM` `changeset` upload flow, that is being processed in 4 stages and 2 separate cleanup stages:
 
 ### Stage I: pre-upload
 In this stage we set the environment before the actual upload - this includes generating a `changeset` on `osm-api` and setting the tracked resources on `osm-sync-tracker`.
@@ -130,6 +130,17 @@ graph TD
     Status -- Success --> Finish((Finish Batch))
     Status -- Error --> Retry[Throw Error: BullMQ Retry]
 ```
+
+### Cleanup Stages: Redis & OSM Cleanup
+After the 2nd stage of uploading the changeset completes successfuly, two independent batch cleanup workers run in parallel to release resources.
+
+#### Redis Cleanup (changeset-redis-cleanup queue)
+Deletes changeset merge request data from Redis that was stored at the beginning of the flow. Jobs are processed in batches — all changeset keys in a batch are deleted in a single atomic operation.
+This stage is purely internal and has no external service dependencies beyond Redis itself.
+
+#### OSM Cleanup (changeset-osm-cleanup queue)
+Attempts to explicitly close changesets on the OSM API. Jobs are processed in batches with each close call executed concurrently via Promise.allSettled, meaning a failure on one changeset does not block the others.
+Even if a changeset closure fails, it will be closed automaticly after 24h by OSM internal triggers.
 
 ## API
 Checkout the OpenAPI spec [here](/openapi3.yaml)
