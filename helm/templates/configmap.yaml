@@ -6,6 +6,7 @@ kind: ConfigMap
 metadata:
   name: {{ printf "%s-configmap" (include "naephi.fullname" .) }}
 data:
+  CONFIG_OFFLINE_MODE: 'true'
   REQUEST_PAYLOAD_LIMIT: {{ .Values.env.requestPayloadLimit | quote }}
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
@@ -32,79 +33,74 @@ data:
   APP_OSM_ID_RESOLVER: {{ .Values.env.app.osmIdResolver | quote }}
 
   # Flows
-  APP_FLOWS_CHANGESET_UPLOAD_MAX_ATTEMPTS: {{ .Values.env.app.flows.changesetUpload.maxAttempts | quote }}
+  {{- range $flowName, $flowConfig := .Values.env.app.flows }}
+  {{- $flow := $flowName | kebabcase | upper }}
+  {{- range $key, $val := $flowConfig }}
+  {{- $upperKey := $key | kebabcase | upper }}
+  APP_FLOWS_{{ $flow }}_{{ $upperKey }}: {{ $val | quote }}
+  {{- end }}
+  {{- end }}
 
   # Queues
-  {{- $queues := .Values.env.app.queues }}
-  {{- $queueEnvMap := dict
-    "changesetPreUpload"    "CHANGESET_PRE_UPLOAD"
-    "changesetUpload"       "CHANGESET_UPLOAD"
-    "changesetPostUpload"   "CHANGESET_POST_UPLOAD"
-    "changesetClosure"      "CHANGESET_CLOSURE"
-    "changesetRedisCleanup" "CHANGESET_REDIS_CLEANUP"
-    "changesetOsmCleanup"   "CHANGESET_OSM_CLEANUP"
-  }}
-  {{- range $key, $envKey := $queueEnvMap }}
-  {{- $q := index $queues $key }}
-  APP_QUEUES_{{ $envKey }}_JOB_ATTEMPTS: {{ $q.job.attempts | quote }}
-  APP_QUEUES_{{ $envKey }}_JOB_DELAY: {{ $q.job.delay | quote }}
-  APP_QUEUES_{{ $envKey }}_JOB_BACKOFF_TYPE: {{ $q.job.backoff.type | quote }}
-  APP_QUEUES_{{ $envKey }}_JOB_BACKOFF_DELAY: {{ $q.job.backoff.delay | quote }}
-  APP_QUEUES_{{ $envKey }}_WORKER_CONCURRENCY: {{ $q.worker.concurrency | quote }}
-  {{- if $q.worker.limiter.enabled }}
-  APP_QUEUES_{{ $envKey }}_WORKER_LIMITER_MAX: {{ $q.worker.limiter.max | quote }}
-  APP_QUEUES_{{ $envKey }}_WORKER_LIMITER_DURATION: {{ $q.worker.limiter.duration | quote }}
+  {{- range $queueName, $q := .Values.env.app.queues }}
+  {{- $queue := $queueName | kebabcase | upper }}
+  APP_QUEUES_{{ $queue }}_JOB_ATTEMPTS: {{ $q.job.attempts | quote }}
+  APP_QUEUES_{{ $queue }}_JOB_DELAY: {{ $q.job.delay | quote }}
+  {{- if $q.job.backoff }}
+  APP_QUEUES_{{ $queue }}_JOB_BACKOFF_TYPE: {{ $q.job.backoff.type | quote }}
+  APP_QUEUES_{{ $queue }}_JOB_BACKOFF_DELAY: {{ $q.job.backoff.delay | quote }}
+  {{- else }}
+  APP_QUEUES_{{ $queue }}_JOB_BACKOFF_TYPE: {{ $q.job.backoffType | quote }}
+  APP_QUEUES_{{ $queue }}_JOB_BACKOFF_DELAY: {{ $q.job.backoffDelay | quote }}
   {{- end }}
-  APP_QUEUES_{{ $envKey }}_WORKER_MAX_STALLED_COUNT: {{ $q.worker.maxStalledCount | quote }}
-  APP_QUEUES_{{ $envKey }}_WORKER_STALLED_INTERVAL: {{ $q.worker.stalledInterval | quote }}
-  APP_QUEUES_{{ $envKey }}_WORKER_REMOVE_ON_COMPLETE_AGE: {{ $q.worker.removeOnComplete.age | quote }}
-  APP_QUEUES_{{ $envKey }}_WORKER_REMOVE_ON_COMPLETE_COUNT: {{ $q.worker.removeOnComplete.count | quote }}
-  APP_QUEUES_{{ $envKey }}_WORKER_REMOVE_ON_FAIL_AGE: {{ $q.worker.removeOnFail.age | quote }}
+  APP_QUEUES_{{ $queue }}_WORKER_CONCURRENCY: {{ $q.worker.concurrency | quote }}
+  {{- if $q.worker.limiter.enabled }}
+  APP_QUEUES_{{ $queue }}_WORKER_LIMITER_MAX: {{ $q.worker.limiter.max | quote }}
+  APP_QUEUES_{{ $queue }}_WORKER_LIMITER_DURATION: {{ $q.worker.limiter.duration | quote }}
+  {{- end }}
+  APP_QUEUES_{{ $queue }}_WORKER_MAX_STALLED_COUNT: {{ $q.worker.maxStalledCount | quote }}
+  APP_QUEUES_{{ $queue }}_WORKER_STALLED_INTERVAL: {{ $q.worker.stalledInterval | quote }}
+  APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_COMPLETE_AGE: {{ $q.worker.removeOnComplete.age | quote }}
+  APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_COMPLETE_COUNT: {{ $q.worker.removeOnComplete.count | quote }}
+  APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_FAIL_AGE: {{ $q.worker.removeOnFail.age | quote }}
   {{- if $q.worker.removeOnFail.count }}
-  APP_QUEUES_{{ $envKey }}_WORKER_REMOVE_ON_FAIL_COUNT: {{ $q.worker.removeOnFail.count | quote }}
+  APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_FAIL_COUNT: {{ $q.worker.removeOnFail.count | quote }}
   {{- end }}
   {{- if $q.batch }}
-  APP_QUEUES_{{ $envKey }}_BATCH_SIZE: {{ $q.batch.size | quote }}
-  APP_QUEUES_{{ $envKey }}_BATCH_MIN_SIZE: {{ $q.batch.minSize | quote }}
-  APP_QUEUES_{{ $envKey }}_BATCH_TIMEOUT: {{ $q.batch.timeout | quote }}
+  APP_QUEUES_{{ $queue }}_BATCH_SIZE: {{ $q.batch.size | quote }}
+  APP_QUEUES_{{ $queue }}_BATCH_MIN_SIZE: {{ $q.batch.minSize | quote }}
+  APP_QUEUES_{{ $queue }}_BATCH_TIMEOUT: {{ $q.batch.timeout | quote }}
   {{- end }}
   {{- end }}
 
   # Clients
-  {{- $clients := .Values.env.app.clients }}
-  {{- $clientEnvMap := dict
-    "osmApi"         "OSM_API"
-    "osmSyncTracker" "OSM_SYNC_TRACKER"
-    "changeMerger"   "CHANGE_MERGER"
-    "idToOsm"        "ID_TO_OSM"
-  }}
-  {{- range $key, $envKey := $clientEnvMap }}
-  {{- $c := index $clients $key }}
-  APP_CLIENTS_{{ $envKey }}_URL: {{ $c.url | quote }}
-  APP_CLIENTS_{{ $envKey }}_TIMEOUT: {{ $c.timeout | quote }}
-  APP_CLIENTS_{{ $envKey }}_ENABLE_RETRY_STRATEGY: {{ $c.retryStrategy.enabled | quote }}
+  {{- range $clientName, $c := .Values.env.app.clients }}
+  {{- $client := $clientName | kebabcase | upper }}
+  APP_CLIENTS_{{ $client }}_URL: {{ $c.url | quote }}
+  APP_CLIENTS_{{ $client }}_TIMEOUT: {{ $c.timeout | quote }}
+  APP_CLIENTS_{{ $client }}_ENABLE_RETRY_STRATEGY: {{ $c.retryStrategy.enabled | quote }}
   {{- if $c.retryStrategy.enabled }}
-  APP_CLIENTS_{{ $envKey }}_RETRY_RETRIES: {{ $c.retryStrategy.retries | quote }}
-  APP_CLIENTS_{{ $envKey }}_RETRY_SHOULD_RESET_TIMEOUT: {{ $c.retryStrategy.shouldResetTimeout | quote }}
-  APP_CLIENTS_{{ $envKey }}_RETRY_IS_EXPONENTIAL: {{ $c.retryStrategy.isExponential | quote }}
-  APP_CLIENTS_{{ $envKey }}_RETRY_DELAY: {{ $c.retryStrategy.delay | quote }}
+  APP_CLIENTS_{{ $client }}_RETRY_RETRIES: {{ $c.retryStrategy.retries | quote }}
+  APP_CLIENTS_{{ $client }}_RETRY_SHOULD_RESET_TIMEOUT: {{ $c.retryStrategy.shouldResetTimeout | quote }}
+  APP_CLIENTS_{{ $client }}_RETRY_IS_EXPONENTIAL: {{ $c.retryStrategy.isExponential | quote }}
+  APP_CLIENTS_{{ $client }}_RETRY_DELAY: {{ $c.retryStrategy.delay | quote }}
   {{- end }}
-  APP_CLIENTS_{{ $envKey }}_HEADERS: {{ $c.headers | quote }}
+  APP_CLIENTS_{{ $client }}_HEADERS: {{ $c.headers | quote }}
   {{- end }}
 
   # Redis
-  REDIS_HOST: {{ .Values.env.redis.host | quote }}
-  REDIS_PORT: {{ .Values.env.redis.port | quote }}
-  REDIS_DB: {{ .Values.env.redis.db | quote }}
-  {{- if .Values.env.redis.keyPrefix }}
-  REDIS_KEY_PREFIX: {{ .Values.env.redis.keyPrefix | quote }}
+  REDIS_HOST: {{ .Values.redis.host | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}
+  REDIS_DB: {{ .Values.redis.db | quote }}
+  {{- if .Values.redis.keyPrefix }}
+  REDIS_KEY_PREFIX: {{ .Values.redis.keyPrefix | quote }}
   {{- end }}
 
   # BullMQ
-  BULMQ_HOST: {{ .Values.env.bullmq.host | quote }}
-  BULMQ_PORT: {{ .Values.env.bullmq.port | quote }}
-  BULMQ_DB: {{ .Values.env.bullmq.db | quote }}
-  {{- if .Values.env.bullmq.keyPrefix }}
-  BULLMQ_KEY_PREFIX: {{ .Values.env.bullmq.keyPrefix | quote }}
+  BULLMQ_HOST: {{ .Values.bullmq.host | quote }}
+  BULLMQ_PORT: {{ .Values.bullmq.port | quote }}
+  BULLMQ_DB: {{ .Values.bullmq.db | quote }}
+  {{- if .Values.bullmq.keyPrefix }}
+  BULLMQ_KEY_PREFIX: {{ .Values.bullmq.keyPrefix | quote }}
   {{- end }}
 {{- end }}

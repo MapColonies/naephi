@@ -8,10 +8,10 @@ import type { IOsmSyncTracker, PatchEntitiesRequest } from '@src/clients/osmSync
 import { SERVICES } from '@src/common/constants';
 import { MergeRequest } from '@src/clients/changeMerger/types';
 import { DEFAULT_CREATE_CHANGESET_TAGS } from '@src/clients/osmAPI/constants';
-import { RedisClient } from '@src/redis/client';
 import { determineChangesetStatus } from '@src/clients/osmAPI/helpers';
 import { ChangesetNotFoundError } from '@src/clients/osmAPI/errors';
 import { CLIENTS } from '@src/clients/constants';
+import type { IRedisClient } from '@src/redis/interfaces';
 import type { ConfigType } from '@src/common/config';
 import { QueueEnum, QueueIdentifiers, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
@@ -24,7 +24,7 @@ export class PreUploadWorker extends BullWorkerProvider<ChangesetUploadData, Cha
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
     @inject(SERVICES.CONFIG) config: ConfigType,
     @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
-    @inject(RedisClient) private readonly redis: RedisClient,
+    @inject(SERVICES.REDIS_CLIENT) private readonly redis: IRedisClient,
     @inject(CLIENTS.OSM_API) private readonly osmApi: IOsmAPI,
     @inject(CLIENTS.OSM_SYNC_TRACKER) private readonly tracker: IOsmSyncTracker
   ) {
@@ -33,8 +33,6 @@ export class PreUploadWorker extends BullWorkerProvider<ChangesetUploadData, Cha
     const prefix = config.get('bullmq.keyPrefix');
 
     super({ logger: workerLogger, metricsRegistry, connection, workerOptions: { ...workerOptions, prefix } });
-
-    this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });
   }
 
   protected getQueueName(): QueueEnum {

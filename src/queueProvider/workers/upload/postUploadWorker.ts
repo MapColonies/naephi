@@ -33,8 +33,6 @@ export class PostUploadWorker extends BullWorkerProvider<ChangesetUploadData, vo
     const prefix = config.get('bullmq.keyPrefix');
 
     super({ logger: workerLogger, metricsRegistry, connection, workerOptions: { ...workerOptions, prefix } });
-
-    this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });
   }
 
   protected getQueueName(): QueueEnum {

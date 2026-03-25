@@ -6,7 +6,6 @@ import { Job, UnrecoverableError, WorkerOptions } from 'bullmq';
 import { ChangesetStatus, type IOsmAPI } from '@src/clients/osmAPI/types';
 import { SERVICES } from '@src/common/constants';
 import type { IChangeMerger, MergeRequest } from '@src/clients/changeMerger/types';
-import { RedisClient } from '@src/redis/client';
 import type { JobQueueProvider } from '@src/queueProvider/queues/interfaces';
 import { determineChangesetStatus } from '@src/clients/osmAPI/helpers';
 import { FlowManager } from '@src/flow/models/flowManager';
@@ -21,6 +20,7 @@ import {
 } from '@src/clients/osmAPI/errors';
 import { CLIENTS } from '@src/clients/constants';
 import type { ConfigType } from '@src/common/config';
+import type { IRedisClient } from '@src/redis/interfaces';
 import { QueueEnum, QueueIdentifiers, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import type { IOsmIdResolver } from '../../../osmIdResolver/interfaces';
@@ -40,7 +40,7 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
     @inject(SERVICES.CONFIG) config: ConfigType,
     @inject(SERVICES.BULLMQ_WORKER_CONNECTION) connection: ioRedis,
-    @inject(RedisClient) private readonly redis: RedisClient,
+    @inject(SERVICES.REDIS_CLIENT) private readonly redis: IRedisClient,
     @inject(SERVICES.OSM_ID_RESOLVER) private readonly osmIdResolver: IOsmIdResolver,
     @inject(CLIENTS.OSM_API) private readonly osmApi: IOsmAPI,
     @inject(CLIENTS.CHANGE_MERGER) private readonly changeMerger: IChangeMerger,
@@ -53,8 +53,6 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
     const prefix = config.get('bullmq.keyPrefix');
 
     super({ logger: workerLogger, metricsRegistry, connection, workerOptions: { ...workerOptions, prefix } });
-
-    this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });
   }
 
   protected getQueueName(): QueueEnum {

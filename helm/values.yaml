@@ -3,13 +3,6 @@ global:
   tracing: {}
   metrics: {}
 
-mclabels:
-  component: backend
-  partOf: boilerplates
-  owner: common
-  prometheus:
-    enabled: true
-
 enabled: true
 replicaCount: 1
 revisionHistoryLimit: 5
@@ -20,8 +13,8 @@ nameOverride: ""
 fullnameOverride: ""
 
 configManagement:
-  offlineMode: false
-  name: 'service-name'
+  offlineMode: true
+  name: 'naephi'
   version: 'latest'
   serverUrl: 'http://localhost:8080/api'
 
@@ -63,6 +56,7 @@ caKey: 'ca.crt'
 
 image:
   repository: naephi
+  # tag: 'latest'
   pullPolicy: IfNotPresent
 
 env:
@@ -273,31 +267,31 @@ env:
           # delay: 100
         headers: '{}'
 
-  redis:
-    host: localhost
-    port: 6379
-    username: ""
-    password: ""
-    db: 0
-    # keyPrefix: "{ingestion}"
-    enableSslAuth: false
-    sslPaths:
-      ca: ""
-      key: ""
-      cert: ""
+redis:
+  host: localhost
+  port: 6379
+  username: ""
+  password: ""
+  db: 0
+  # keyPrefix: "{ingestion}"
+  enableSslAuth: false
+  sslPaths:
+    ca: ""
+    key: ""
+    cert: ""
 
-  bullmq:
-    host: localhost
-    port: 6380
-    username: ""
-    password: ""
-    db: 0
-    keyPrefix: "{naephi}"
-    enableSslAuth: false
-    sslPaths:
-      ca: ""
-      key: ""
-      cert: ""
+bullmq:
+  host: localhost
+  port: 6380
+  username: ""
+  password: ""
+  db: 0
+  keyPrefix: "{naephi}"
+  enableSslAuth: false
+  sslPaths:
+    ca: ""
+    key: ""
+    cert: ""
 
 resources:
   enabled: true

@@ -37,6 +37,8 @@ import { OsmApiClient } from './clients/osmAPI/client';
 import { ChangeMergerClient } from './clients/changeMerger/client';
 import { IdToOsmClient } from './clients/idToOsm/client';
 import { OsmSyncTrackerClient } from './clients/osmSyncTracker/client';
+import { IRedisClient } from './redis/interfaces';
+import { RedisClient } from './redis/client';
 
 const registerBullDeps = (): InjectionObject<unknown>[] => {
   const queueProvidersDeps: InjectionObject<unknown>[] = Object.values(QueueEnum).map((queueName) => ({
@@ -153,10 +155,15 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         },
       },
       {
-        token: SERVICES.REDIS_CLIENT,
+        token: SERVICES.REDIS,
         provider: {
           useFactory: instancePerContainerCachingFactory(createRedisFactory),
         },
+      },
+      {
+        token: SERVICES.REDIS_CLIENT,
+        provider: { useClass: RedisClient },
+        options: { lifecycle: Lifecycle.Singleton },
       },
       {
         token: CLIENTS.OSM_API,
@@ -198,8 +205,9 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
         provider: {
           useFactory: (container): HealthCheck => {
             const bullMq = container.resolve<ioRedis>(SERVICES.BULLMQ_QUEUE_CONNECTION);
+            const redisClient = container.resolve<IRedisClient>(SERVICES.REDIS_CLIENT);
             return async (): Promise<void> => {
-              await Promise.all([bullMq.ping()]);
+              await Promise.all([bullMq.ping(), redisClient.ping()]);
             };
           },
         },

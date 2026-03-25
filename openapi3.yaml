@@ -1,7 +1,7 @@
 openapi: 3.0.1
 info:
   title: naephi
-  description: basic template for map colonies service
+  description: here to relief you from nifi activies.
   version: 1.0.0
   license:
     name: MIT

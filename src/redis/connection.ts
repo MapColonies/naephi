@@ -63,7 +63,7 @@ export const createRedisFactory: FactoryFunction<unknown> = (container) => {
   const redis = new ioRedis(options);
 
   cleanupRegistry.register({
-    id: SERVICES.REDIS_CLIENT,
+    id: SERVICES.REDIS,
     func: async (): Promise<void> => {
       await redisQuitSafely(redis);
     },

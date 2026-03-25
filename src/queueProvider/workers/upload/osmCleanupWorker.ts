@@ -29,8 +29,6 @@ export class OsmCleanupWorker extends BullBatchWorkerProvider<CompleteChangesetI
     const prefix = config.get('bullmq.keyPrefix');
 
     super({ logger: workerLogger, metricsRegistry, connection, batch, workerOptions: { ...workerOptions, prefix } });
-
-    this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, workerOptions: this.workerOptions });
   }
 
   protected getQueueName(): QueueEnum {

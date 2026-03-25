@@ -647,24 +647,24 @@
     "keyPrefix": "REDIS_KEY_PREFIX"
   },
   "bullmq": {
-    "host": "BULMQ_HOST",
+    "host": "BULLMQ_HOST",
     "port": {
-      "__name": "BULMQ_PORT",
+      "__name": "BULLMQ_PORT",
       "__format": "number"
     },
-    "username": "BULMQ_USERNAME",
-    "password": "BULMQ_PASSWORD",
+    "username": "BULLMQ_USERNAME",
+    "password": "BULLMQ_PASSWORD",
     "enableSslAuth": {
-      "__name": "BULMQ_ENABLE_SSL_AUTH",
+      "__name": "BULLMQ_ENABLE_SSL_AUTH",
       "__format": "boolean"
     },
     "sslPaths": {
-      "ca": "BULMQ_CA_PATH",
-      "key": "BULMQ_KEY_PATH",
-      "cert": "BULMQ_CERT_PATH"
+      "ca": "BULLMQ_CA_PATH",
+      "key": "BULLMQ_KEY_PATH",
+      "cert": "BULLMQ_CERT_PATH"
     },
     "db": {
-      "__name": "BULMQ_DB",
+      "__name": "BULLMQ_DB",
       "__format": "number"
     },
     "keyPrefix": "BULLMQ_KEY_PREFIX"

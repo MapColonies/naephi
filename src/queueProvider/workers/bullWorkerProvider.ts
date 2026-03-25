@@ -26,6 +26,8 @@ export abstract class BullWorkerProvider<DataType = unknown, ReturnType = unknow
     this.workerOptions = workerOptions;
     this.connection = connection;
 
+    this.logger.info({ msg: `initializing ${this.queueName} queue worker`, queueName: this.queueName, connection, workerOptions });
+
     if (this.metricsRegistry !== undefined) {
       this.porcessingHistogram = new Histogram({
         name: `${SNAKED_SERVICE_NAME}_${snakeCase(this.queueName)}_job_processing_duration_seconds`,
