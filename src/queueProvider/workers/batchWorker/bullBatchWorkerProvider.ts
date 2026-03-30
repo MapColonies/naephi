@@ -22,6 +22,7 @@ export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWo
       prefix: BULLMQ_KEY_PREFIX,
       autorun: false,
       telemetry: bullMqOtelFactory(),
+      logger: this.logger,
     };
 
     this.worker = new BatchWorker(this.queueName, this.processBatch.bind(this), workerConstructorOptions);

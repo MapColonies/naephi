@@ -9,27 +9,30 @@ export interface ChangesetCreateRequest {
   tags: ChangesetTags;
 }
 
+export interface ChangesetElement {
+  type: 'changeset';
+  id: number;
+  created_at: string;
+  closed_at?: string;
+  open: boolean;
+  user: string;
+  uid: number;
+  min_lat?: number;
+  min_lon?: number;
+  max_lat?: number;
+  max_lon?: number;
+  comments_count: number;
+  changes_count: number;
+  tags?: Record<string, string>;
+}
+
 export interface OsmChangesetResponse {
   version: string;
   generator: string;
   copyright: string;
   attribution: string;
   license: string;
-  changeset: {
-    id: number;
-    created_at: string;
-    closed_at?: string;
-    open: boolean;
-    user: string;
-    uid: number;
-    min_lat?: number;
-    min_lon?: number;
-    max_lat?: number;
-    max_lon?: number;
-    comments_count: number;
-    changes_count: number;
-    tags?: Record<string, string>;
-  };
+  elements: [ChangesetElement];
 }
 
 export enum ChangesetStatus {

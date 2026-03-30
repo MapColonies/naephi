@@ -149,7 +149,7 @@ export class OsmApiClient extends BaseClient implements IOsmAPI {
 
     return `
         <osm>
-          <changeset version="0.6" generator=${SERVICE_NAME}>
+          <changeset version="0.6" generator="${SERVICE_NAME}">
             ${tagsXml}
           </changeset>
         </osm>`.trim();

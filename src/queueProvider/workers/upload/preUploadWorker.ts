@@ -61,7 +61,7 @@ export class PreUploadWorker extends BullWorkerProvider<ChangesetUploadData, Cha
       try {
         // 3.i. osm-api::GET /changeset/{changesetId}
         const osmChangeset = await this.osmApi.getChangeset(changesetOsmId);
-        const status = determineChangesetStatus(osmChangeset);
+        const status = determineChangesetStatus(osmChangeset.elements[0]);
 
         // if the changeset is closed and empty, we must create a new one
         if (status === ChangesetStatus.CLOSED_AND_EMPTY) {

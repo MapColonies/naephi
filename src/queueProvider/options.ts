@@ -31,7 +31,7 @@ export interface BatchOptions {
   timeout: number;
 }
 
-export interface BatchWorkerOptions extends WorkerOptions {
+export interface BatchWorkerOptions extends WorkerOptions, BaseOptions {
   batch?: Partial<BatchOptions>;
 }
 

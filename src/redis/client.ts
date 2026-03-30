@@ -94,7 +94,7 @@ export class RedisClient implements IRedisClient {
   }
 
   public async ping(): Promise<boolean> {
-    this.logger?.info({ msg: 'executing redis ping command' });
+    this.logger?.debug({ msg: 'executing redis ping command' });
     const stopTimer = this.commandsDurationHistogram?.startTimer({ command: 'ping' });
 
     try {

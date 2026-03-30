@@ -34,16 +34,16 @@ data:
 
   # Flows
   {{- range $flowName, $flowConfig := .Values.env.app.flows }}
-  {{- $flow := $flowName | kebabcase | upper }}
+  {{- $flow := $flowName | snakecase | upper }}
   {{- range $key, $val := $flowConfig }}
-  {{- $upperKey := $key | kebabcase | upper }}
+  {{- $upperKey := $key | snakecase | upper }}
   APP_FLOWS_{{ $flow }}_{{ $upperKey }}: {{ $val | quote }}
   {{- end }}
   {{- end }}
 
   # Queues
   {{- range $queueName, $q := .Values.env.app.queues }}
-  {{- $queue := $queueName | kebabcase | upper }}
+  {{- $queue := $queueName | snakecase | upper }}
   APP_QUEUES_{{ $queue }}_JOB_ATTEMPTS: {{ $q.job.attempts | quote }}
   APP_QUEUES_{{ $queue }}_JOB_DELAY: {{ $q.job.delay | quote }}
   {{- if $q.job.backoff }}
@@ -75,7 +75,7 @@ data:
 
   # Clients
   {{- range $clientName, $c := .Values.env.app.clients }}
-  {{- $client := $clientName | kebabcase | upper }}
+  {{- $client := $clientName | snakecase | upper }}
   APP_CLIENTS_{{ $client }}_URL: {{ $c.url | quote }}
   APP_CLIENTS_{{ $client }}_TIMEOUT: {{ $c.timeout | quote }}
   APP_CLIENTS_{{ $client }}_ENABLE_RETRY_STRATEGY: {{ $c.retryStrategy.enabled | quote }}

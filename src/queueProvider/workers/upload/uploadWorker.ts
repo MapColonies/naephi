@@ -136,7 +136,7 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
 
   private async getChangesetStatus(changesetOsmId: number): Promise<ChangesetStatus> {
     const changeset = await this.osmApi.getChangeset(changesetOsmId);
-    const status = determineChangesetStatus(changeset);
+    const status = determineChangesetStatus(changeset.elements[0]);
     return status;
   }
 

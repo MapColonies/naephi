@@ -1,6 +1,6 @@
-import { ChangesetStatus, OsmChangesetResponse } from './types';
+import { ChangesetElement, ChangesetStatus } from './types';
 
-export const determineChangesetStatus = ({ changeset }: OsmChangesetResponse): ChangesetStatus => {
+export const determineChangesetStatus = (changeset: ChangesetElement): ChangesetStatus => {
   const isOpen = changeset.open;
   const isEmpty = changeset.changes_count === 0;
 
