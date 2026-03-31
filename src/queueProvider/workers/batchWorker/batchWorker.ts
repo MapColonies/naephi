@@ -1,9 +1,17 @@
 import { Job, Worker } from 'bullmq';
-import type { Registry } from 'prom-client';
+import { Counter, Gauge, Histogram, type Registry } from 'prom-client';
+import { snakeCase } from 'lodash';
 import type { ILogger } from '@src/common/interfaces';
+import { MS_IN_SECOND, SNAKED_SERVICE_NAME } from '@src/common/constants';
 import { BatchOptions, BatchWorkerOptions } from '../../options';
-import { BufferedJob } from './interfaces';
-import { TIMEOUT_WINDOW_MULTIPLIER, DEFAULT_WORKER_LOCK_DURATION, WORST_CASE_PROCESSING_MULTIPLIER, DEFAULT_BATCH_OPTIONS } from './constants';
+import { BufferedJob, FlushTrigger } from './interfaces';
+import {
+  TIMEOUT_WINDOW_MULTIPLIER,
+  DEFAULT_WORKER_LOCK_DURATION,
+  WORST_CASE_PROCESSING_MULTIPLIER,
+  DEFAULT_BATCH_OPTIONS,
+  BATCH_SIZE_HISTOGRAM_METRIC_BUCKETS,
+} from './constants';
 
 export class BatchWorker<DataType = unknown, NameType extends string = string> extends Worker<DataType, void, NameType> {
   protected readonly logger: ILogger;
@@ -14,8 +22,13 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
   private readonly batchProcessingLockDuration: number;
   private readonly processor: (jobs: Job<DataType, void, NameType>[]) => Promise<void>;
 
+  private readonly batchSizeHistogram?: Histogram;
+  private readonly batchProcessingDurationHistogram?: Histogram;
+  private readonly bufferSizeGauge?: Gauge;
+  private readonly flushCounter?: Counter;
+
   public constructor(name: string, processor: (jobs: Job<DataType, void, NameType>[]) => Promise<void>, options: BatchWorkerOptions) {
-    const { logger, batch, ...workerOptions } = options;
+    const { logger, metricsRegistry, batch, ...workerOptions } = options;
 
     const batchOptions: Required<BatchOptions> = {
       ...DEFAULT_BATCH_OPTIONS,
@@ -28,44 +41,74 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
       batchOptions.timeout * WORST_CASE_PROCESSING_MULTIPLIER * TIMEOUT_WINDOW_MULTIPLIER
     );
 
-    super(
-      name,
-      async (job) => {
-        return new Promise<void>((resolve, reject) => {
-          const timeoutId = setTimeout(() => {
-            this.buffer = this.buffer.filter((bufferedJob) => bufferedJob.job.id !== job.id);
-            reject(new Error('job timed out in local buffer'));
-          }, batchProcessingLockDuration);
+    const bufferJobFn = async (job: Job<DataType, void, NameType>): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          this.buffer = this.buffer.filter((bufferedJob) => bufferedJob.job.id !== job.id);
+          this.bufferSizeGauge?.set(this.buffer.length);
+          reject(new Error('job timed out in local buffer'));
+        }, batchProcessingLockDuration);
 
-          this.buffer.push({
-            job,
-            resolve: () => {
-              clearTimeout(timeoutId);
-              resolve();
-            },
-            reject: (err: Error) => {
-              clearTimeout(timeoutId);
-              reject(err);
-            },
-          });
-
-          if (this.buffer.length >= batchOptions.size) {
-            void this.flush();
-          } else {
-            this.startTimer();
-          }
+        this.buffer.push({
+          job,
+          resolve: () => {
+            clearTimeout(timeoutId);
+            resolve();
+          },
+          reject: (err: Error) => {
+            clearTimeout(timeoutId);
+            reject(err);
+          },
         });
-      },
-      {
-        ...workerOptions,
-        lockDuration: batchProcessingLockDuration,
-      }
-    );
+
+        this.bufferSizeGauge?.set(this.buffer.length);
+
+        if (this.buffer.length >= batchOptions.size) {
+          void this.flush('size');
+        } else {
+          this.startTimer();
+        }
+      });
+    };
+
+    super(name, bufferJobFn, {
+      ...workerOptions,
+      lockDuration: batchProcessingLockDuration,
+    });
 
     this.logger = logger;
+    this.metricsRegistry = metricsRegistry;
     this.batchOptions = batchOptions;
     this.batchProcessingLockDuration = batchProcessingLockDuration;
     this.processor = processor;
+
+    if (metricsRegistry !== undefined) {
+      this.batchSizeHistogram = new Histogram({
+        name: `${SNAKED_SERVICE_NAME}_${snakeCase(name)}_batch_size`,
+        help: 'Distribution of batch sizes at flush time',
+        buckets: BATCH_SIZE_HISTOGRAM_METRIC_BUCKETS,
+        registers: [metricsRegistry],
+      });
+
+      this.batchProcessingDurationHistogram = new Histogram({
+        name: `${SNAKED_SERVICE_NAME}_${snakeCase(name)}_batch_processing_duration_seconds`,
+        help: 'Duration of batch processing from flush to completion',
+        registers: [metricsRegistry],
+      });
+
+      this.bufferSizeGauge = new Gauge({
+        name: `${SNAKED_SERVICE_NAME}_${snakeCase(name)}_buffer_size`,
+        help: 'Current number of jobs waiting in the batch buffer',
+        registers: [metricsRegistry],
+      });
+
+      this.flushCounter = new Counter({
+        name: `${SNAKED_SERVICE_NAME}_${snakeCase(name)}_batch_flush_total`,
+        help: 'Total number of batch flushes by trigger type',
+        labelNames: ['trigger'] as const,
+        registers: [metricsRegistry],
+      });
+    }
   }
 
   public override async close(force?: boolean): Promise<void> {
@@ -78,7 +121,7 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
 
     if (this.buffer.length > 0) {
       try {
-        await this.flush(true);
+        await this.flush('forced');
       } catch (err) {
         this.logger.error({
           msg: 'failed to flush buffer during shutdown',
@@ -94,14 +137,16 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
 
   private startTimer(): void {
     this.timer ??= setTimeout(() => {
-      void this.flush();
+      void this.flush('timer');
     }, this.batchOptions.timeout);
   }
 
-  private async flush(force = false): Promise<void> {
+  private async flush(trigger: FlushTrigger): Promise<void> {
+    const force = trigger === 'forced';
+
     this.logger.debug({
       msg: 'batch worker flush is fired',
-      force,
+      trigger,
       ...this.getBatchMetadata(),
     });
 
@@ -123,20 +168,28 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
     const batch = [...this.buffer];
     this.buffer = [];
 
+    this.bufferSizeGauge?.set(0);
+    this.flushCounter?.inc({ trigger });
+    this.batchSizeHistogram?.observe(batch.length);
+
     this.logger.info({
       msg: 'initializing batch processing',
-      force,
+      trigger,
       batchSize: batch.length,
       ...this.getBatchMetadata(),
     });
 
+    const flushStart = Date.now();
+
     try {
       await this.processor(batch.map((bufferedJob) => bufferedJob.job));
+
+      this.batchProcessingDurationHistogram?.observe((Date.now() - flushStart) / MS_IN_SECOND);
 
       batch.forEach((bufferedJob) => {
         this.logger.info({
           msg: 'resolving job as completed',
-          force,
+          trigger,
           jobId: bufferedJob.job.id,
           batchSize: batch.length,
           ...this.getBatchMetadata(),
@@ -144,9 +197,11 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
         bufferedJob.resolve();
       });
     } catch (err) {
+      this.batchProcessingDurationHistogram?.observe((Date.now() - flushStart) / MS_IN_SECOND);
+
       this.logger.error({
         msg: 'batch processing failed, failing all jobs in batch',
-        force,
+        trigger,
         err,
         batchSize: batch.length,
         ...this.getBatchMetadata(),
@@ -155,7 +210,7 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
       batch.forEach((bufferedJob) => {
         this.logger.info({
           msg: 'rejecting job as failed',
-          force,
+          trigger,
           jobId: bufferedJob.job.id,
           batchSize: batch.length,
           ...this.getBatchMetadata(),

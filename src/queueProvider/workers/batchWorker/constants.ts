@@ -14,3 +14,6 @@ export const DEFAULT_BATCH_OPTIONS: Required<BatchOptions> = {
 } as const;
 
 export const UNSUPPORTED_PROCESS_JOB_MSG = 'processJob called on a BatchWorker. processBatch should be used instead.';
+
+// eslint-disable-next-line @typescript-eslint/no-magic-numbers
+export const BATCH_SIZE_HISTOGRAM_METRIC_BUCKETS = [1, 2, 5, 10, 25, 50, 100];
