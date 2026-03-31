@@ -105,7 +105,16 @@ export abstract class BullWorkerProvider<DataType = unknown, ReturnType = unknow
       const attempts = job?.opts.attempts;
       const attemptsMade = job?.attemptsMade;
 
-      this.logger.error({ msg: `job failed`, queueName: this.queueName, jobId: job?.id, jobName: job?.name, err, attempts, attemptsMade });
+      this.logger.error({
+        msg: `job failed`,
+        queueName: this.queueName,
+        jobId: job?.id,
+        jobName: job?.name,
+        err,
+        attempts,
+        attemptsMade,
+        jobOptions: job?.opts,
+      });
 
       if (attempts !== undefined && attemptsMade !== undefined && attempts > attemptsMade) {
         this.jobCounter?.inc({ status: 'retry' });

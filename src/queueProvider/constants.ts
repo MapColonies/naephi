@@ -1,5 +1,4 @@
 import { JobType } from 'bullmq';
-import { BatchOptions } from './options';
 
 export enum QueueEnum {
   CHANGESET_PRE_UPLOAD = 'changeset-pre-uploads',
@@ -68,9 +67,3 @@ export const CONSTANT_BULLMQ_QUEUE_CONNECTION_OPTIONS = {
 };
 
 export const JOB_STATES: JobType[] = ['active', 'completed', 'delayed', 'failed', 'paused', 'wait', 'waiting', 'waiting-children'];
-
-export const DEFAULT_BATCH_OPTIONS: BatchOptions = {
-  size: 10,
-  minSize: 1,
-  timeout: 5000,
-} as const;

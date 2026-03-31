@@ -4,8 +4,7 @@ import { BULLMQ_KEY_PREFIX } from '../../constants';
 import { bullMqOtelFactory } from '../../telemetry';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import { BatchWorker } from './batchWorker';
-
-const UNSUPPORTED_PROCESS_JOB_MSG = 'processJob called on a BatchWorker. processBatch should be used instead.';
+import { DEFAULT_BATCH_OPTIONS, UNSUPPORTED_PROCESS_JOB_MSG } from './constants';
 
 export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWorkerProvider<DataType, void> {
   protected override readonly workerOptions: BatchWorkerOptions;
@@ -16,8 +15,10 @@ export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWo
   }
 
   protected override createWorker(): void {
-    const workerConstructorOptions = {
+    const workerConstructorOptions: BatchWorkerOptions = {
       ...this.workerOptions,
+      // concurrency should match or be greater than batch size
+      concurrency: Math.max(this.workerOptions.concurrency ?? 1, this.workerOptions.batch?.size ?? DEFAULT_BATCH_OPTIONS.size),
       connection: this.connection,
       prefix: BULLMQ_KEY_PREFIX,
       autorun: false,

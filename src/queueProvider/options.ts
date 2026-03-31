@@ -23,20 +23,18 @@ export interface WorkerProviderOptions extends BaseOptions {
 }
 
 export interface BatchOptions {
-  /** Maximum batch size that triggers an immediate flush, bypassing the timer. */
-  size: number;
-  /** Minimum number of jobs required to flush when the timer fires. */
-  minSize: number;
-  /** Duration in milliseconds to wait before attempting a flush. */
-  timeout: number;
+  size?: number;
+  minSize?: number;
+  timeout?: number;
+  lockDuration: number;
 }
 
 export interface BatchWorkerOptions extends WorkerOptions, BaseOptions {
-  batch?: Partial<BatchOptions>;
+  batch?: BatchOptions;
 }
 
 export interface BatchWorkerProviderOptions extends WorkerProviderOptions {
-  batch?: Partial<BatchOptions>;
+  batch?: BatchOptions;
 }
 
 export interface QueueConfiguration {

@@ -1,30 +1,32 @@
 import { Job, Worker } from 'bullmq';
 import type { Registry } from 'prom-client';
 import type { ILogger } from '@src/common/interfaces';
-import { DEFAULT_BATCH_OPTIONS } from '@src/queueProvider/constants';
 import { BatchOptions, BatchWorkerOptions } from '../../options';
 import { BufferedJob } from './interfaces';
-
-const DEFAULT_TIMEOUT_WINDOW_MULTIPLIER = 2;
+import { TIMEOUT_WINDOW_MULTIPLIER, DEFAULT_WORKER_LOCK_DURATION, WORST_CASE_PROCESSING_MULTIPLIER, DEFAULT_BATCH_OPTIONS } from './constants';
 
 export class BatchWorker<DataType = unknown, NameType extends string = string> extends Worker<DataType, void, NameType> {
   protected readonly logger: ILogger;
   protected readonly metricsRegistry: Registry | undefined;
   private buffer: BufferedJob<DataType, NameType>[] = [];
   private timer: NodeJS.Timeout | null = null;
-  private readonly batchOptions: BatchOptions;
+  private readonly batchOptions: Required<BatchOptions>;
   private readonly batchProcessingLockDuration: number;
   private readonly processor: (jobs: Job<DataType, void, NameType>[]) => Promise<void>;
 
   public constructor(name: string, processor: (jobs: Job<DataType, void, NameType>[]) => Promise<void>, options: BatchWorkerOptions) {
     const { logger, batch, ...workerOptions } = options;
 
-    const batchOptions: BatchOptions = {
+    const batchOptions: Required<BatchOptions> = {
       ...DEFAULT_BATCH_OPTIONS,
       ...batch,
     };
 
-    const batchProcessingLockDuration = Math.max(workerOptions.lockDuration ?? 0, batchOptions.timeout * DEFAULT_TIMEOUT_WINDOW_MULTIPLIER);
+    // worst case: job waits full timeout in buffer + processor runs for full timeout duration
+    const batchProcessingLockDuration = Math.max(
+      workerOptions.lockDuration ?? DEFAULT_WORKER_LOCK_DURATION,
+      batchOptions.timeout * WORST_CASE_PROCESSING_MULTIPLIER * TIMEOUT_WINDOW_MULTIPLIER
+    );
 
     super(
       name,
@@ -32,8 +34,8 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
         return new Promise<void>((resolve, reject) => {
           const timeoutId = setTimeout(() => {
             this.buffer = this.buffer.filter((bufferedJob) => bufferedJob.job.id !== job.id);
-            reject(new Error('Job timed out in local buffer'));
-          }, workerOptions.lockDuration);
+            reject(new Error('job timed out in local buffer'));
+          }, batchProcessingLockDuration);
 
           this.buffer.push({
             job,
@@ -47,7 +49,7 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
             },
           });
 
-          if (this.buffer.length >= this.batchOptions.size) {
+          if (this.buffer.length >= batchOptions.size) {
             void this.flush();
           } else {
             this.startTimer();
@@ -67,7 +69,7 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
   }
 
   public override async close(force?: boolean): Promise<void> {
-    this.logger.info({ msg: 'batch worker is closing', bufferSize: this.buffer.length, force });
+    this.logger.info({ msg: 'batch worker is closing', bufferSize: this.buffer.length, force, ...this.getBatchMetadata() });
 
     if (this.timer) {
       clearTimeout(this.timer);
@@ -97,6 +99,12 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
   }
 
   private async flush(force = false): Promise<void> {
+    this.logger.debug({
+      msg: 'batch worker flush is fired',
+      force,
+      ...this.getBatchMetadata(),
+    });
+
     if (this.timer) {
       clearTimeout(this.timer);
       this.timer = null;
@@ -117,17 +125,19 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
 
     this.logger.info({
       msg: 'initializing batch processing',
+      force,
       batchSize: batch.length,
       ...this.getBatchMetadata(),
     });
+
     try {
-      // execute provided batch logic
       await this.processor(batch.map((bufferedJob) => bufferedJob.job));
 
       batch.forEach((bufferedJob) => {
         this.logger.info({
           msg: 'resolving job as completed',
-          job: bufferedJob.job.id,
+          force,
+          jobId: bufferedJob.job.id,
           batchSize: batch.length,
           ...this.getBatchMetadata(),
         });
@@ -135,7 +145,8 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
       });
     } catch (err) {
       this.logger.error({
-        msg: 'batch worker processing failed to at least one job in the batch, failing all jobs in batch.',
+        msg: 'batch processing failed, failing all jobs in batch',
+        force,
         err,
         batchSize: batch.length,
         ...this.getBatchMetadata(),
@@ -144,7 +155,8 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
       batch.forEach((bufferedJob) => {
         this.logger.info({
           msg: 'rejecting job as failed',
-          job: bufferedJob.job,
+          force,
+          jobId: bufferedJob.job.id,
           batchSize: batch.length,
           ...this.getBatchMetadata(),
         });

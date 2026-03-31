@@ -58,6 +58,7 @@ data:
   APP_QUEUES_{{ $queue }}_WORKER_LIMITER_MAX: {{ $q.worker.limiter.max | quote }}
   APP_QUEUES_{{ $queue }}_WORKER_LIMITER_DURATION: {{ $q.worker.limiter.duration | quote }}
   {{- end }}
+  APP_QUEUES_{{ $queue }}_WORKER_LOCK_DURATION: {{ $q.worker.lockDuration | quote }}
   APP_QUEUES_{{ $queue }}_WORKER_MAX_STALLED_COUNT: {{ $q.worker.maxStalledCount | quote }}
   APP_QUEUES_{{ $queue }}_WORKER_STALLED_INTERVAL: {{ $q.worker.stalledInterval | quote }}
   APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_COMPLETE_AGE: {{ $q.worker.removeOnComplete.age | quote }}
@@ -70,6 +71,7 @@ data:
   APP_QUEUES_{{ $queue }}_BATCH_SIZE: {{ $q.batch.size | quote }}
   APP_QUEUES_{{ $queue }}_BATCH_MIN_SIZE: {{ $q.batch.minSize | quote }}
   APP_QUEUES_{{ $queue }}_BATCH_TIMEOUT: {{ $q.batch.timeout | quote }}
+  APP_QUEUES_{{ $queue }}_BATCH_LOCK_DURATION: {{ $q.batch.lockDuration | quote }}
   {{- end }}
   {{- end }}
 

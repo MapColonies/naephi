@@ -220,8 +220,8 @@ All queues share the same configuration structure. Fields marked as **Required**
 |-----|----------------|------|----------|---------|-------------|
 | `jobOptions.attempts` | `_JOB_ATTEMPTS` | number | No | `3` | Maximum number of job attempts |
 | `jobOptions.delay` | `_JOB_DELAY` | number | No | `0` | Delay in ms before the job is processed |
-| `jobOptions.backoff.type` | `_JOB_BACKOFF_TYPE` | string | No | `exponential` | Backoff strategy (`exponential` or `fixed`) |
-| `jobOptions.backoff.delay` | `_JOB_BACKOFF_DELAY` | number | No | `1000` | Base backoff delay in ms |
+| `jobOptions.backoff.type` | `_JOB_BACKOFF_TYPE` | string | No | `fixed` | Backoff strategy (`exponential` or `fixed`) |
+| `jobOptions.backoff.delay` | `_JOB_BACKOFF_DELAY` | number | No | `5000` | Base backoff delay in ms |
 
 ### Worker Options
 
@@ -230,6 +230,7 @@ All queues share the same configuration structure. Fields marked as **Required**
 | `workerOptions.concurrency` | `_WORKER_CONCURRENCY` | number | No | `1` | Number of jobs processed concurrently |
 | `workerOptions.limiter.max` | `_WORKER_LIMITER_MAX` | number | No | `100` | Max jobs processed per limiter duration (only applied when limiter is enabled) |
 | `workerOptions.limiter.duration` | `_WORKER_LIMITER_DURATION` | number | No | `1000` | Limiter window duration in ms (only applied when limiter is enabled) |
+| `workerOptions.lockDuration` | `_WORKER_LOCK_DURATION` | number | No | `30000` | Duration of a single job lock in ms |
 | `workerOptions.maxStalledCount` | `_WORKER_MAX_STALLED_COUNT` | number | No | `1` | Max number of times a job can stall before failing |
 | `workerOptions.stalledInterval` | `_WORKER_STALLED_INTERVAL` | number | No | `30000` | Interval in ms to check for stalled jobs |
 | `workerOptions.removeOnComplete.age` | `_WORKER_REMOVE_ON_COMPLETE_AGE` | number | No | `3600` | Max age in seconds to keep completed jobs |
@@ -244,6 +245,7 @@ All queues share the same configuration structure. Fields marked as **Required**
 | `batchOptions.size` | `_BATCH_SIZE` | number | No | `10` | Maximum batch size that triggers an immediate flush |
 | `batchOptions.minSize` | `_BATCH_MIN_SIZE` | number | No | `1` | Minimum number of jobs required to flush when the timer fires |
 | `batchOptions.timeout` | `_BATCH_TIMEOUT` | number | No | `5000` | Duration in ms to wait before attempting a flush |
+| `batchOptions.lockDuration` | `_BATCH_LOCK_DURATION` | number | No | `30000` | Duration of a batch processing lock in ms |
 
 ---
 
@@ -269,8 +271,8 @@ All HTTP clients share the same configuration structure.
 | `enableRetryStrategy` | `_ENABLE_RETRY_STRATEGY` | boolean | No | `false` | Enable automatic request retries |
 | `retryStrategy.retries` | `_RETRY_RETRIES` | number | No | `3` | Number of retry attempts (only applied when retry is enabled) |
 | `retryStrategy.shouldResetTimeout` | `_RETRY_SHOULD_RESET_TIMEOUT` | boolean | No | `true` | Reset timeout on each retry (only applied when retry is enabled) |
-| `retryStrategy.isExponential` | `_RETRY_IS_EXPONENTIAL` | boolean | No | `true` | Use exponential backoff between retries (only applied when retry is enabled) |
-| `retryStrategy.delay` | `_RETRY_DELAY` | number | No | `1000` | Base retry delay in ms (only applied when retry is enabled) |
+| `retryStrategy.isExponential` | `_RETRY_IS_EXPONENTIAL` | boolean | No | `false` | Use exponential backoff between retries (only applied when retry is enabled) |
+| `retryStrategy.delay` | `_RETRY_DELAY` | number | No | `5000` | Base retry delay in ms (only applied when retry is enabled) |
 | `headers` | `_HEADERS` | JSON | No | `{}` | Additional headers sent with every request (JSON string) |
 
 ### Auth Options *(optional, `osmApi` only)*

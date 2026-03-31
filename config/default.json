@@ -45,8 +45,8 @@
           "attempts": 3,
           "delay": 0,
           "backoff": {
-            "type": "exponential",
-            "delay": 1000
+            "type": "fixed",
+            "delay": 5000
           }
         },
         "workerOptions": {
@@ -72,8 +72,8 @@
           "attempts": 3,
           "delay": 0,
           "backoff": {
-            "type": "exponential",
-            "delay": 1000
+            "type": "fixed",
+            "delay": 5000
           }
         },
         "workerOptions": {
@@ -99,8 +99,8 @@
           "attempts": 3,
           "delay": 0,
           "backoff": {
-            "type": "exponential",
-            "delay": 1000
+            "type": "fixed",
+            "delay": 5000
           }
         },
         "workerOptions": {
@@ -126,8 +126,8 @@
           "attempts": 3,
           "delay": 0,
           "backoff": {
-            "type": "exponential",
-            "delay": 1000
+            "type": "fixed",
+            "delay": 5000
           }
         },
         "workerOptions": {
@@ -150,7 +150,8 @@
         "batchOptions": {
           "size": 10,
           "minSize": 1,
-          "timeout": 5000
+          "timeout": 5000,
+          "lockDuration": 30000
         }
       },
       "changesetRedisCleanup": {
@@ -158,8 +159,8 @@
           "attempts": 3,
           "delay": 0,
           "backoff": {
-            "type": "exponential",
-            "delay": 1000
+            "type": "fixed",
+            "delay": 5000
           }
         },
         "workerOptions": {
@@ -168,6 +169,7 @@
             "max": 100,
             "duration": 1000
           },
+          "lockDuration": 30000,
           "maxStalledCount": 1,
           "stalledInterval": 30000,
           "removeOnComplete": {
@@ -182,7 +184,8 @@
         "batchOptions": {
           "size": 10,
           "minSize": 1,
-          "timeout": 5000
+          "timeout": 5000,
+          "lockDuration": 30000
         }
       },
       "changesetOsmCleanup": {
@@ -190,8 +193,8 @@
           "attempts": 3,
           "delay": 0,
           "backoff": {
-            "type": "exponential",
-            "delay": 1000
+            "type": "fixed",
+            "delay": 5000
           }
         },
         "workerOptions": {
@@ -200,6 +203,7 @@
             "max": 100,
             "duration": 1000
           },
+          "lockDuration": 30000,
           "maxStalledCount": 1,
           "stalledInterval": 30000,
           "removeOnComplete": {
@@ -214,7 +218,8 @@
         "batchOptions": {
           "size": 10,
           "minSize": 1,
-          "timeout": 5000
+          "timeout": 5000,
+          "lockDuration": 30000
         }
       }
     },
@@ -226,8 +231,8 @@
         "retryStrategy": {
           "retries": 3,
           "shouldResetTimeout": true,
-          "isExponential": true,
-          "delay": 1000
+          "isExponential": false,
+          "delay": 5000
         },
         "headers": {}
       },
@@ -238,8 +243,8 @@
         "retryStrategy": {
           "retries": 3,
           "shouldResetTimeout": true,
-          "isExponential": true,
-          "delay": 1000
+          "isExponential": false,
+          "delay": 5000
         },
         "headers": {}
       },
@@ -250,8 +255,8 @@
         "retryStrategy": {
           "retries": 3,
           "shouldResetTimeout": true,
-          "isExponential": true,
-          "delay": 1000
+          "isExponential": false,
+          "delay": 5000
         },
         "headers": {}
       },
@@ -262,8 +267,8 @@
         "retryStrategy": {
           "retries": 3,
           "shouldResetTimeout": true,
-          "isExponential": true,
-          "delay": 1000
+          "isExponential": false,
+          "delay": 5000
         },
         "headers": {}
       }
