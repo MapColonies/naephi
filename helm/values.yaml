@@ -32,7 +32,11 @@ readinessProbe:
   failureThreshold: 6
   path: /liveness
 
+annotations: {}
+
 podAnnotations: {}
+
+podLabels: {}
 
 extraVolumes: []
 
@@ -83,82 +87,89 @@ env:
     queues:
       changesetPreUpload:
         job:
-          attempts: 3
+          attempts: 10
           delay: 0
           backoff:
-            type: exponential
-            delay: 1000
+            type: fixed
+            delay: 5000
         worker:
           concurrency: 1
           limiter:
             enabled: false
             max: 100
             duration: 1000
+          lockDuration: 30000
           maxStalledCount: 1
           stalledInterval: 30000
           removeOnComplete:
             age: 3600
-            count: 1000
+            # count: 1000
           removeOnFail:
             age: 2419200
             # count: 100000
       changesetUpload:
         job:
-          attempts: 3
+          attempts: 10
           delay: 0
-          backoffType: exponential
-          backoffDelay: 1000
+          backoff:
+            type: fixed
+            delay: 3600000 # 1 hour
         worker:
           concurrency: 1
           limiter:
             enabled: false
             max: 100
             duration: 1000
+          lockDuration: 30000
           maxStalledCount: 1
           stalledInterval: 30000
           removeOnComplete:
             age: 3600
-            count: 1000
+            # count: 1000
           removeOnFail:
             age: 2419200
             # count: 100000
       changesetPostUpload:
         job:
-          attempts: 3
+          attempts: 10
           delay: 0
-          backoffType: exponential
-          backoffDelay: 1000
+          backoff:
+            type: fixed
+            delay: 5000
         worker:
           concurrency: 1
           limiter:
             enabled: false
             max: 100
             duration: 1000
+          lockDuration: 30000
           maxStalledCount: 1
           stalledInterval: 30000
           removeOnComplete:
             age: 3600
-            count: 1000
+            # count: 1000
           removeOnFail:
             age: 2419200
             # count: 100000
       changesetClosure:
         job:
-          attempts: 3
+          attempts: 10
           delay: 0
-          backoffType: exponential
-          backoffDelay: 1000
+          backoff:
+            type: fixed
+            delay: 5000
         worker:
           concurrency: 1
           limiter:
             enabled: false
             max: 100
             duration: 1000
+          lockDuration: 30000
           maxStalledCount: 1
           stalledInterval: 30000
           removeOnComplete:
             age: 3600
-            count: 1000
+            # count: 1000
           removeOnFail:
             age: 2419200
             # count: 100000
@@ -166,23 +177,26 @@ env:
           size: 10
           minSize: 1
           timeout: 5000
+          lockDuration: 30000
       changesetRedisCleanup:
         job:
-          attempts: 3
+          attempts: 10
           delay: 0
-          backoffType: exponential
-          backoffDelay: 1000
+          backoff:
+            type: fixed
+            delay: 5000
         worker:
           concurrency: 1
           limiter:
             enabled: false
             max: 100
             duration: 1000
+          lockDuration: 30000
           maxStalledCount: 1
           stalledInterval: 30000
           removeOnComplete:
             age: 3600
-            count: 1000
+            # count: 1000
           removeOnFail:
             age: 2419200
             # count: 100000
@@ -190,23 +204,26 @@ env:
           size: 10
           minSize: 1
           timeout: 5000
+          lockDuration: 30000
       changesetOsmCleanup:
         job:
-          attempts: 3
+          attempts: 10
           delay: 0
-          backoffType: exponential
-          backoffDelay: 1000
+          backoff:
+            type: fixed
+            delay: 5000
         worker:
           concurrency: 1
           limiter:
             enabled: false
             max: 100
             duration: 1000
+          lockDuration: 30000
           maxStalledCount: 1
           stalledInterval: 30000
           removeOnComplete:
             age: 3600
-            count: 1000
+            # count: 1000
           removeOnFail:
             age: 2419200
             # count: 100000
@@ -214,6 +231,7 @@ env:
           size: 10
           minSize: 1
           timeout: 5000
+          lockDuration: 30000
     clients:
       osmApi:
         url: http://localhost:3000
@@ -224,7 +242,7 @@ env:
           # shouldResetTimeout: false
           # isExponential: false
           # delay: 100
-        headers: '{}'
+        headers: '{"Key":"Value"}'
         # auth:
         #   type: oauth2
         #   accessToken: ""

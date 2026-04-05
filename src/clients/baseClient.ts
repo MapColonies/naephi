@@ -26,6 +26,12 @@ export abstract class BaseClient {
     this.options = options;
     this.httpClient = axios.create({ baseURL: options.url, timeout: options.timeout, headers: options.headers });
 
+    this.logger?.info({
+      msg: 'initializing http client',
+      clientName,
+      options,
+    });
+
     if (options.enableRetryStrategy === true) {
       this.configureRetryStrategy(options.retryStrategy as RetryStrategy);
     }

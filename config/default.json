@@ -42,7 +42,7 @@
     "queues": {
       "changesetPreUpload": {
         "jobOptions": {
-          "attempts": 3,
+          "attempts": 10,
           "delay": 0,
           "backoff": {
             "type": "fixed",
@@ -55,25 +55,24 @@
             "max": 100,
             "duration": 1000
           },
+          "lockDuration": 30000,
           "maxStalledCount": 1,
           "stalledInterval": 30000,
           "removeOnComplete": {
-            "age": 3600,
-            "count": 100
+            "age": 3600
           },
           "removeOnFail": {
-            "age": 86400,
-            "count": 1000
+            "age": 86400
           }
         }
       },
       "changesetUpload": {
         "jobOptions": {
-          "attempts": 3,
+          "attempts": 10,
           "delay": 0,
           "backoff": {
             "type": "fixed",
-            "delay": 5000
+            "delay": 3600000
           }
         },
         "workerOptions": {
@@ -82,21 +81,20 @@
             "max": 100,
             "duration": 1000
           },
+          "lockDuration": 30000,
           "maxStalledCount": 1,
           "stalledInterval": 30000,
           "removeOnComplete": {
-            "age": 3600,
-            "count": 100
+            "age": 3600
           },
           "removeOnFail": {
-            "age": 86400,
-            "count": 1000
+            "age": 86400
           }
         }
       },
       "changesetPostUpload": {
         "jobOptions": {
-          "attempts": 3,
+          "attempts": 10,
           "delay": 0,
           "backoff": {
             "type": "fixed",
@@ -109,21 +107,20 @@
             "max": 100,
             "duration": 1000
           },
+          "lockDuration": 30000,
           "maxStalledCount": 1,
           "stalledInterval": 30000,
           "removeOnComplete": {
-            "age": 3600,
-            "count": 100
+            "age": 3600
           },
           "removeOnFail": {
-            "age": 86400,
-            "count": 1000
+            "age": 86400
           }
         }
       },
       "changesetClosure": {
         "jobOptions": {
-          "attempts": 3,
+          "attempts": 10,
           "delay": 0,
           "backoff": {
             "type": "fixed",
@@ -136,15 +133,14 @@
             "max": 100,
             "duration": 1000
           },
+          "lockDuration": 30000,
           "maxStalledCount": 1,
           "stalledInterval": 30000,
           "removeOnComplete": {
-            "age": 3600,
-            "count": 100
+            "age": 3600
           },
           "removeOnFail": {
-            "age": 86400,
-            "count": 1000
+            "age": 86400
           }
         },
         "batchOptions": {
@@ -156,7 +152,7 @@
       },
       "changesetRedisCleanup": {
         "jobOptions": {
-          "attempts": 3,
+          "attempts": 10,
           "delay": 0,
           "backoff": {
             "type": "fixed",
@@ -173,12 +169,10 @@
           "maxStalledCount": 1,
           "stalledInterval": 30000,
           "removeOnComplete": {
-            "age": 3600,
-            "count": 100
+            "age": 3600
           },
           "removeOnFail": {
-            "age": 86400,
-            "count": 1000
+            "age": 86400
           }
         },
         "batchOptions": {
@@ -190,7 +184,7 @@
       },
       "changesetOsmCleanup": {
         "jobOptions": {
-          "attempts": 3,
+          "attempts": 10,
           "delay": 0,
           "backoff": {
             "type": "fixed",
@@ -207,12 +201,10 @@
           "maxStalledCount": 1,
           "stalledInterval": 30000,
           "removeOnComplete": {
-            "age": 3600,
-            "count": 100
+            "age": 3600
           },
           "removeOnFail": {
-            "age": 86400,
-            "count": 1000
+            "age": 86400
           }
         },
         "batchOptions": {

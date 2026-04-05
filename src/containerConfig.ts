@@ -104,21 +104,20 @@ const registerBullDeps = (): InjectionObject<unknown>[] => {
 };
 
 export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
-  const cleanupRegistry = new CleanupRegistry();
+  let container: DependencyContainer | undefined;
 
   try {
     const dependencies: InjectionObject<unknown>[] = [
       { token: SERVICES.CONFIG, provider: { useValue: getConfig() } },
       {
         token: SERVICES.CLEANUP_REGISTRY,
-        provider: { useValue: cleanupRegistry },
-        afterAllInjectionHook(container): void {
-          const logger = container.resolve<Logger>(SERVICES.LOGGER);
-          const cleanupRegistryLogger = logger.child({ subComponent: 'cleanupRegistry' });
-
-          cleanupRegistry.on('itemFailed', (id, error, msg) => cleanupRegistryLogger.error({ msg, itemId: id, err: error }));
-          cleanupRegistry.on('itemCompleted', (id) => cleanupRegistryLogger.info({ itemId: id, msg: 'cleanup finished for item' }));
-          cleanupRegistry.on('finished', (status) => cleanupRegistryLogger.info({ msg: `cleanup registry finished cleanup`, status }));
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const logger = container.resolve<Logger>(SERVICES.LOGGER);
+            const cleanupRegistryLogger = logger.child({ subComponent: 'cleanupRegistry' });
+            const cleanupRegistry = new CleanupRegistry({ logger: cleanupRegistryLogger });
+            return cleanupRegistry;
+          }),
         },
       },
       {
@@ -215,15 +214,21 @@ export const registerExternalValues = async (options?: RegisterOptions): Promise
       {
         token: ON_SIGNAL,
         provider: {
-          useValue: cleanupRegistry.trigger.bind(cleanupRegistry),
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+            return cleanupRegistry.trigger.bind(cleanupRegistry);
+          }),
         },
       },
       ...registerBullDeps(),
     ];
-    const container = await registerDependencies(dependencies, options?.override, options?.useChild);
+    container = await registerDependencies(dependencies, options?.override, options?.useChild);
     return container;
   } catch (error) {
-    await cleanupRegistry.trigger();
+    if (container?.isRegistered(SERVICES.CLEANUP_REGISTRY) === true) {
+      const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+      await cleanupRegistry.trigger();
+    }
     throw error;
   }
 };

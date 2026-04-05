@@ -6,6 +6,20 @@ import { SNAKED_SERVICE_NAME } from '@src/common/constants';
 import { type FlowProducerOptions } from '../options';
 import { FlowProducerProvider } from './interfaces';
 
+interface FlowJobMetadata {
+  name: string;
+  queueName: string;
+  opts: FlowJob['opts'];
+  children?: FlowJobMetadata[];
+}
+
+const extractFlowJobMetadata = (flowJob: FlowJob): FlowJobMetadata => ({
+  name: flowJob.name,
+  queueName: flowJob.queueName,
+  opts: flowJob.opts,
+  children: flowJob.children?.map(extractFlowJobMetadata),
+});
+
 @injectable()
 export class BullFlowProducerProvider implements FlowProducerProvider {
   private readonly flowProducer: FlowProducer;
@@ -38,9 +52,8 @@ export class BullFlowProducerProvider implements FlowProducerProvider {
   public async add(flowJob: FlowJob, opts?: FlowOpts): Promise<JobNode> {
     this.logger.info({
       msg: 'adding a flow to queues',
-      flowOpts: { opts, ...flowJob.opts },
-      rootFlowJobQueue: flowJob.queueName,
-      rootFlowJobName: flowJob.name,
+      flowOpts: opts,
+      flow: extractFlowJobMetadata(flowJob),
     });
 
     const tree = await this.flowProducer.add(flowJob, opts);

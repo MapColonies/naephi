@@ -1,14 +1,16 @@
 import type { Logger } from '@map-colonies/js-logger';
 import { inject, injectable } from 'tsyringe';
 import { SERVICES } from '@common/constants';
-import { BULLMQ_FLOW_PRODUCER_SYMBOL, JOB_SUFFIX_MAP, QueueEnum } from '@src/queueProvider/constants';
+import { BULLMQ_FLOW_PRODUCER_SYMBOL, JOB_SUFFIX_MAP, QueueEnum, QueueIdentifiers } from '@src/queueProvider/constants';
 import type { FlowProducerProvider } from '@src/queueProvider/queues/interfaces';
 import type { ConfigType } from '@src/common/config';
+import { getJobOptionsMap, JobOptionsMap } from '@src/queueProvider/queues/helpers';
 import { ChangesetFlowPayload, FlowOptions, FlowOptionsMap, FLOWS, INITIAL_FLOW_ATTEMPT } from './flow';
 
 @injectable()
 export class FlowManager {
   private readonly flowConfigMap: FlowOptionsMap;
+  private readonly jobOptionsMap: JobOptionsMap;
 
   public constructor(
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
@@ -19,6 +21,8 @@ export class FlowManager {
       acc[flow] = config.get(`app.flows.${flow}`) as unknown as FlowOptions;
       return acc;
     }, {} as FlowOptionsMap);
+
+    this.jobOptionsMap = getJobOptionsMap(config);
   }
 
   public async initChangesetFlow(payload: ChangesetFlowPayload): Promise<void> {
@@ -37,31 +41,38 @@ export class FlowManager {
         flowAttempt,
         maxAttempts,
       });
+
       return;
     }
 
     await this.flowProducer.add({
-      name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_CLOSURE]}`, // stage 4
+      name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_CLOSURE]}`,
       queueName: QueueEnum.CHANGESET_CLOSURE,
-      opts: { jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_CLOSURE]}` },
+      opts: { ...this.jobOptionsMap[QueueIdentifiers.CHANGESET_CLOSURE], jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_CLOSURE]}` },
       data: { changesetId, flowAttempt },
       children: [
         {
-          name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_POST_UPLOAD]}`, // stage 3
+          name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_POST_UPLOAD]}`,
           queueName: QueueEnum.CHANGESET_POST_UPLOAD,
-          opts: { jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_POST_UPLOAD]}` },
+          opts: {
+            ...this.jobOptionsMap[QueueIdentifiers.CHANGESET_POST_UPLOAD],
+            jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_POST_UPLOAD]}`,
+          },
           data: { changesetId, flowAttempt },
           children: [
             {
-              name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_UPLOAD]}`, // stage 2
+              name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_UPLOAD]}`,
               queueName: QueueEnum.CHANGESET_UPLOAD,
-              opts: { jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_UPLOAD]}` },
+              opts: { ...this.jobOptionsMap[QueueIdentifiers.CHANGESET_UPLOAD], jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_UPLOAD]}` },
               data: { changesetId, flowAttempt },
               children: [
                 {
-                  name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_PRE_UPLOAD]}`, // stage 1
+                  name: `${changesetId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_PRE_UPLOAD]}`,
                   queueName: QueueEnum.CHANGESET_PRE_UPLOAD,
-                  opts: { jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_PRE_UPLOAD]}` },
+                  opts: {
+                    ...this.jobOptionsMap[QueueIdentifiers.CHANGESET_PRE_UPLOAD],
+                    jobId: `${flowId}${JOB_SUFFIX_MAP[QueueEnum.CHANGESET_PRE_UPLOAD]}`,
+                  },
                   data: { changesetId, flowAttempt },
                 },
               ],

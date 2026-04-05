@@ -21,6 +21,7 @@ import {
 import { CLIENTS } from '@src/clients/constants';
 import type { ConfigType } from '@src/common/config';
 import type { IRedisClient } from '@src/redis/interfaces';
+import { getJobOptionsMap, JobOptionsMap } from '@src/queueProvider/queues/helpers';
 import { QueueEnum, QueueIdentifiers, WorkerEnum } from '../../constants';
 import { BullWorkerProvider } from '../bullWorkerProvider';
 import type { IOsmIdResolver } from '../../../osmIdResolver/interfaces';
@@ -35,6 +36,8 @@ interface ChangesetContext {
 
 @injectable()
 export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, ChangesetUploadReturn> {
+  private readonly jobOptionsMap: JobOptionsMap;
+
   public constructor(
     @inject(SERVICES.LOGGER) logger: Logger,
     @inject(SERVICES.METRICS) metricsRegistry: Registry,
@@ -53,6 +56,8 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
     const prefix = config.get('bullmq.keyPrefix');
 
     super({ logger: workerLogger, metricsRegistry, connection, workerOptions: { ...workerOptions, prefix } });
+
+    this.jobOptionsMap = getJobOptionsMap(config);
   }
 
   protected getQueueName(): QueueEnum {
@@ -165,8 +170,16 @@ export class UploadWorker extends BullWorkerProvider<ChangesetUploadData, Change
 
     try {
       await Promise.all([
-        this.redisCleanupQueue.add(`${changesetId}-redis-cleanup`, { changesetId, osmId: changesetOsmId }, { jobId: `${changesetId}-redis-cleanup` }),
-        this.osmCleanupQueue.add(`${changesetId}-osm-cleanup`, { changesetId, osmId: changesetOsmId }, { jobId: `${changesetId}-osm-cleanup` }),
+        this.redisCleanupQueue.add(
+          `${changesetId}-redis-cleanup`,
+          { changesetId, osmId: changesetOsmId },
+          { ...this.jobOptionsMap[QueueIdentifiers.CHANGESET_REDIS_CLEANUP], jobId: `${changesetId}-redis-cleanup` }
+        ),
+        this.osmCleanupQueue.add(
+          `${changesetId}-osm-cleanup`,
+          { changesetId, osmId: changesetOsmId },
+          { ...this.jobOptionsMap[QueueIdentifiers.CHANGESET_OSM_CLEANUP], jobId: `${changesetId}-osm-cleanup` }
+        ),
       ]);
     } catch (error) {
       this.logger.error({ msg: 'failed to create one or more cleanup jobs', context, err: error });

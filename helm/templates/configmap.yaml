@@ -6,7 +6,6 @@ kind: ConfigMap
 metadata:
   name: {{ printf "%s-configmap" (include "naephi.fullname" .) }}
 data:
-  CONFIG_OFFLINE_MODE: 'true'
   REQUEST_PAYLOAD_LIMIT: {{ .Values.env.requestPayloadLimit | quote }}
   RESPONSE_COMPRESSION_ENABLED: {{ .Values.env.responseCompressionEnabled | quote }}
   LOG_LEVEL: {{ .Values.env.logLevel | quote }}
@@ -46,13 +45,8 @@ data:
   {{- $queue := $queueName | snakecase | upper }}
   APP_QUEUES_{{ $queue }}_JOB_ATTEMPTS: {{ $q.job.attempts | quote }}
   APP_QUEUES_{{ $queue }}_JOB_DELAY: {{ $q.job.delay | quote }}
-  {{- if $q.job.backoff }}
   APP_QUEUES_{{ $queue }}_JOB_BACKOFF_TYPE: {{ $q.job.backoff.type | quote }}
   APP_QUEUES_{{ $queue }}_JOB_BACKOFF_DELAY: {{ $q.job.backoff.delay | quote }}
-  {{- else }}
-  APP_QUEUES_{{ $queue }}_JOB_BACKOFF_TYPE: {{ $q.job.backoffType | quote }}
-  APP_QUEUES_{{ $queue }}_JOB_BACKOFF_DELAY: {{ $q.job.backoffDelay | quote }}
-  {{- end }}
   APP_QUEUES_{{ $queue }}_WORKER_CONCURRENCY: {{ $q.worker.concurrency | quote }}
   {{- if $q.worker.limiter.enabled }}
   APP_QUEUES_{{ $queue }}_WORKER_LIMITER_MAX: {{ $q.worker.limiter.max | quote }}
@@ -61,9 +55,15 @@ data:
   APP_QUEUES_{{ $queue }}_WORKER_LOCK_DURATION: {{ $q.worker.lockDuration | quote }}
   APP_QUEUES_{{ $queue }}_WORKER_MAX_STALLED_COUNT: {{ $q.worker.maxStalledCount | quote }}
   APP_QUEUES_{{ $queue }}_WORKER_STALLED_INTERVAL: {{ $q.worker.stalledInterval | quote }}
+  {{- if $q.worker.removeOnComplete.age }}
   APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_COMPLETE_AGE: {{ $q.worker.removeOnComplete.age | quote }}
+  {{- end }}
+  {{- if $q.worker.removeOnComplete.count }}
   APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_COMPLETE_COUNT: {{ $q.worker.removeOnComplete.count | quote }}
+  {{- end }}
+  {{- if $q.worker.removeOnFail.age }}
   APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_FAIL_AGE: {{ $q.worker.removeOnFail.age | quote }}
+  {{- end }}
   {{- if $q.worker.removeOnFail.count }}
   APP_QUEUES_{{ $queue }}_WORKER_REMOVE_ON_FAIL_COUNT: {{ $q.worker.removeOnFail.count | quote }}
   {{- end }}
@@ -94,6 +94,11 @@ data:
   REDIS_HOST: {{ .Values.redis.host | quote }}
   REDIS_PORT: {{ .Values.redis.port | quote }}
   REDIS_DB: {{ .Values.redis.db | quote }}
+  {{- if .Values.redis.enableSslAuth }}
+  REDIS_ENABLE_SSL_AUTH: 'true'
+  {{- else }}
+  REDIS_ENABLE_SSL_AUTH: 'false'
+  {{- end }}
   {{- if .Values.redis.keyPrefix }}
   REDIS_KEY_PREFIX: {{ .Values.redis.keyPrefix | quote }}
   {{- end }}
@@ -102,6 +107,11 @@ data:
   BULLMQ_HOST: {{ .Values.bullmq.host | quote }}
   BULLMQ_PORT: {{ .Values.bullmq.port | quote }}
   BULLMQ_DB: {{ .Values.bullmq.db | quote }}
+  {{- if .Values.bullmq.enableSslAuth }}
+  BULLMQ_ENABLE_SSL_AUTH: 'true'
+  {{- else }}
+  BULLMQ_ENABLE_SSL_AUTH: 'false'
+  {{- end }}
   {{- if .Values.bullmq.keyPrefix }}
   BULLMQ_KEY_PREFIX: {{ .Values.bullmq.keyPrefix | quote }}
   {{- end }}

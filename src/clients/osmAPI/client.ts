@@ -106,9 +106,6 @@ export class OsmApiClient extends BaseClient implements IOsmAPI {
 
           case StatusCodes.REQUEST_TOO_LONG:
             throw new ChangesetTooLargeError(changesetId, responseBody);
-
-          default:
-            throw error;
         }
       }
 

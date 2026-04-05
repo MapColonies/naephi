@@ -154,38 +154,37 @@ All configuration values can be set via environment variables. Values marked as 
 
 ## Server
 
-| Key | Env Var | Type | Required | Default | Description |
-|-----|---------|------|----------|---------|-------------|
-| `server.port` | `SERVER_PORT` | number | No | `8080` | HTTP port the server listens on |
-| `server.request.payload.limit` | `REQUEST_PAYLOAD_LIMIT` | string | No | `1mb` | Maximum request payload size |
-| `server.response.compression.enabled` | `RESPONSE_COMPRESSION_ENABLED` | boolean | No | `true` | Enable response compression |
+| Key | Env Var | Description | Type | Required | Default |
+|-----|---------|-------------|------|----------|---------|
+| `server.request.payload.limit` | `REQUEST_PAYLOAD_LIMIT` | Maximum request payload size | string | No | `1mb` |
+| `server.response.compression.enabled` | `RESPONSE_COMPRESSION_ENABLED` | Enable response compression | boolean | No | `true` |
 
 ---
 
 ## Telemetry
 
-| Key | Env Var | Type | Required | Default | Description |
-|-----|---------|------|----------|---------|-------------|
-| `telemetry.serviceName` | `TELEMETRY_SERVICE_NAME` | string | Yes | — | Service name reported to telemetry backends |
-| `telemetry.hostname` | `TELEMETRY_HOST_NAME` | string | Yes | — | Hostname reported to telemetry backends |
-| `telemetry.version` | `TELEMETRY_SERVICE_VERSION` | string | Yes | — | Service version reported to telemetry backends |
-| `telemetry.logger.level` | `LOG_LEVEL` | string | No | `info` | Log level (`trace`, `debug`, `info`, `warn`, `error`, `fatal`) |
-| `telemetry.logger.prettyPrint` | `LOG_PRETTY_PRINT_ENABLED` | boolean | No | `false` | Enable pretty-printed log output |
-| `telemetry.tracing.enabled` | `TELEMETRY_TRACING_ENABLED` | boolean | No | `false` | Enable distributed tracing |
-| `telemetry.tracing.url` | `TELEMETRY_TRACING_URL` | string | No | — | Tracing collector URL |
-| `telemetry.metrics.enabled` | `TELEMETRY_METRICS_ENABLED` | boolean | No | `false` | Enable metrics export |
-| `telemetry.metrics.url` | `TELEMETRY_METRICS_URL` | string | No | — | Metrics collector URL |
-| `telemetry.metrics.interval` | `TELEMETRY_METRICS_INTERVAL` | number | No | — | Metrics export interval in ms |
+| Key | Env Var | Description | Type | Required | Default |
+|-----|---------|-------------|------|----------|---------|
+| `telemetry.shared.serviceName` | `TELEMETRY_SERVICE_NAME` | Service name reported to telemetry backends | string | Yes | — |
+| `telemetry.shared.hostname` | `TELEMETRY_HOST_NAME` | Hostname reported to telemetry backends | string | Yes | — |
+| `telemetry.shared.serviceVersion` | `TELEMETRY_SERVICE_VERSION` | Service version reported to telemetry backends | string | Yes | — |
+| `telemetry.logger.level` | `LOG_LEVEL` | Log level (`trace`, `debug`, `info`, `warn`, `error`, `fatal`) | string | No | `info` |
+| `telemetry.logger.prettyPrint` | `LOG_PRETTY_PRINT_ENABLED` | Enable pretty-printed log output | boolean | No | `false` |
+| `telemetry.tracing.isEnabled` | `TELEMETRY_TRACING_ENABLED` | Enable distributed tracing | boolean | No | `false` |
+| `telemetry.tracing.url` | `TELEMETRY_TRACING_URL` | Tracing collector URL | string | No | — |
+| `telemetry.metrics.enabled` | `TELEMETRY_METRICS_ENABLED` | Enable metrics export | boolean | No | `false` |
+| `telemetry.metrics.url` | `TELEMETRY_METRICS_URL` | Metrics collector URL | string | No | — |
+| `telemetry.metrics.interval` | `TELEMETRY_METRICS_INTERVAL` | Metrics export interval in ms | number | No | — |
 
 ---
 
 ## App
 
-| Key | Env Var | Type | Required | Default | Description |
-|-----|---------|------|----------|---------|-------------|
-| `app.uiPath` | `APP_UI_PATH` | string | No | `/ui` | Path to serve the UI from |
-| `app.initTimeout` | `APP_INIT_TIMEOUT` | number | No | `30000` | Worker initialization timeout in ms |
-| `app.osmIdResolver` | `APP_OSM_ID_RESOLVER` | string | No | `tracker` | OSM ID resolver strategy (`tracker` or `childJob`) |
+| Key | Env Var | Description | Type | Required | Default |
+|-----|---------|-------------|------|----------|---------|
+| `app.uiPath` | `APP_UI_PATH` | Path to serve the UI from | string | No | `/ui` |
+| `app.initTimeout` | `APP_INIT_TIMEOUT` | Worker initialization timeout in ms | number | No | `30000` |
+| `app.osmIdResolver` | `APP_OSM_ID_RESOLVER` | OSM ID resolver strategy (`tracker` or `childJob`) | string | No | `tracker` |
 
 ---
 
@@ -193,9 +192,9 @@ All configuration values can be set via environment variables. Values marked as 
 
 ### `changesetUpload`
 
-| Key | Env Var | Type | Required | Default | Description |
-|-----|---------|------|----------|---------|-------------|
-| `app.flows.changesetUpload.maxAttempts` | `APP_FLOWS_CHANGESET_UPLOAD_MAX_ATTEMPTS` | number | No | `10` | Maximum number of flow re-initialization attempts before aborting |
+| Key | Env Var | Description | Type | Required | Default |
+|-----|---------|-------------|------|----------|---------|
+| `app.flows.changesetUpload.maxAttempts` | `APP_FLOWS_CHANGESET_UPLOAD_MAX_ATTEMPTS` | Maximum number of flow re-initialization attempts before aborting | number | No | `10` |
 
 ---
 
@@ -216,36 +215,36 @@ All queues share the same configuration structure. Fields marked as **Required**
 
 ### Job Options
 
-| Key | Env Var suffix | Type | Required | Default | Description |
-|-----|----------------|------|----------|---------|-------------|
-| `jobOptions.attempts` | `_JOB_ATTEMPTS` | number | No | `3` | Maximum number of job attempts |
-| `jobOptions.delay` | `_JOB_DELAY` | number | No | `0` | Delay in ms before the job is processed |
-| `jobOptions.backoff.type` | `_JOB_BACKOFF_TYPE` | string | No | `fixed` | Backoff strategy (`exponential` or `fixed`) |
-| `jobOptions.backoff.delay` | `_JOB_BACKOFF_DELAY` | number | No | `5000` | Base backoff delay in ms |
+| Key | Env Var suffix | Description | Type | Required | Default |
+|-----|----------------|-------------|------|----------|---------|
+| `jobOptions.attempts` | `_JOB_ATTEMPTS` | Maximum number of job attempts | number | No | `10` |
+| `jobOptions.delay` | `_JOB_DELAY` | Delay in ms before the job is processed | number | No | `0` |
+| `jobOptions.backoff.type` | `_JOB_BACKOFF_TYPE` | Backoff strategy (`exponential` or `fixed`) | string | No | `fixed` |
+| `jobOptions.backoff.delay` | `_JOB_BACKOFF_DELAY` | Base backoff delay in ms | number | No | `5000` (`3600000` for `changesetUpload`) |
 
 ### Worker Options
 
-| Key | Env Var suffix | Type | Required | Default | Description |
-|-----|----------------|------|----------|---------|-------------|
-| `workerOptions.concurrency` | `_WORKER_CONCURRENCY` | number | No | `1` | Number of jobs processed concurrently |
-| `workerOptions.limiter.max` | `_WORKER_LIMITER_MAX` | number | No | `100` | Max jobs processed per limiter duration (only applied when limiter is enabled) |
-| `workerOptions.limiter.duration` | `_WORKER_LIMITER_DURATION` | number | No | `1000` | Limiter window duration in ms (only applied when limiter is enabled) |
-| `workerOptions.lockDuration` | `_WORKER_LOCK_DURATION` | number | No | `30000` | Duration of a single job lock in ms |
-| `workerOptions.maxStalledCount` | `_WORKER_MAX_STALLED_COUNT` | number | No | `1` | Max number of times a job can stall before failing |
-| `workerOptions.stalledInterval` | `_WORKER_STALLED_INTERVAL` | number | No | `30000` | Interval in ms to check for stalled jobs |
-| `workerOptions.removeOnComplete.age` | `_WORKER_REMOVE_ON_COMPLETE_AGE` | number | No | `3600` | Max age in seconds to keep completed jobs |
-| `workerOptions.removeOnComplete.count` | `_WORKER_REMOVE_ON_COMPLETE_COUNT` | number | No | `100` | Max number of completed jobs to keep |
-| `workerOptions.removeOnFail.age` | `_WORKER_REMOVE_ON_FAIL_AGE` | number | No | `86400` | Max age in seconds to keep failed jobs |
-| `workerOptions.removeOnFail.count` | `_WORKER_REMOVE_ON_FAIL_COUNT` | number | No | `1000` | Max number of failed jobs to keep |
+| Key | Env Var suffix | Description | Type | Required | Default |
+|-----|----------------|-------------|------|----------|---------|
+| `workerOptions.concurrency` | `_WORKER_CONCURRENCY` | Number of jobs processed concurrently | number | No | `1` |
+| `workerOptions.limiter.max` | `_WORKER_LIMITER_MAX` | Max jobs processed per limiter duration (only applied when limiter is enabled) | number | No | `100` |
+| `workerOptions.limiter.duration` | `_WORKER_LIMITER_DURATION` | Limiter window duration in ms (only applied when limiter is enabled) | number | No | `1000` |
+| `workerOptions.lockDuration` | `_WORKER_LOCK_DURATION` | Duration of a single job lock in ms | number | No | `30000` |
+| `workerOptions.maxStalledCount` | `_WORKER_MAX_STALLED_COUNT` | Max number of times a job can stall before failing | number | No | `1` |
+| `workerOptions.stalledInterval` | `_WORKER_STALLED_INTERVAL` | Interval in ms to check for stalled jobs | number | No | `30000` |
+| `workerOptions.removeOnComplete.age` | `_WORKER_REMOVE_ON_COMPLETE_AGE` | Max age in seconds to keep completed jobs | number | No | `3600` |
+| `workerOptions.removeOnComplete.count` | `_WORKER_REMOVE_ON_COMPLETE_COUNT` | Max number of completed jobs to keep | number | No | — |
+| `workerOptions.removeOnFail.age` | `_WORKER_REMOVE_ON_FAIL_AGE` | Max age in seconds to keep failed jobs | number | No | `86400` |
+| `workerOptions.removeOnFail.count` | `_WORKER_REMOVE_ON_FAIL_COUNT` | Max number of failed jobs to keep | number | No | — |
 
 ### Batch Options *(only applicable to batch workers which are `changesetClosure`, `changesetRedisCleanup`, `changesetOsmCleanup`)*
 
-| Key | Env Var suffix | Type | Required | Default | Description |
-|-----|----------------|------|----------|---------|-------------|
-| `batchOptions.size` | `_BATCH_SIZE` | number | No | `10` | Maximum batch size that triggers an immediate flush |
-| `batchOptions.minSize` | `_BATCH_MIN_SIZE` | number | No | `1` | Minimum number of jobs required to flush when the timer fires |
-| `batchOptions.timeout` | `_BATCH_TIMEOUT` | number | No | `5000` | Duration in ms to wait before attempting a flush |
-| `batchOptions.lockDuration` | `_BATCH_LOCK_DURATION` | number | No | `30000` | Duration of a batch processing lock in ms |
+| Key | Env Var suffix | Description | Type | Required | Default |
+|-----|----------------|-------------|------|----------|---------|
+| `batchOptions.size` | `_BATCH_SIZE` | Maximum batch size that triggers an immediate flush | number | No | `10` |
+| `batchOptions.minSize` | `_BATCH_MIN_SIZE` | Minimum number of jobs required to flush when the timer fires | number | No | `1` |
+| `batchOptions.timeout` | `_BATCH_TIMEOUT` | Duration in ms to wait before attempting a flush | number | No | `5000` |
+| `batchOptions.lockDuration` | `_BATCH_LOCK_DURATION` | Duration of a batch processing lock in ms | number | No | `30000` |
 
 ---
 
@@ -264,62 +263,62 @@ All HTTP clients share the same configuration structure.
 
 ### Client Options
 
-| Key | Env Var suffix | Type | Required | Default | Description |
-|-----|----------------|------|----------|---------|-------------|
-| `url` | `_URL` | string | Yes | — | Base URL of the service |
-| `timeout` | `_TIMEOUT` | number | No | `5000` | Request timeout in ms |
-| `enableRetryStrategy` | `_ENABLE_RETRY_STRATEGY` | boolean | No | `false` | Enable automatic request retries |
-| `retryStrategy.retries` | `_RETRY_RETRIES` | number | No | `3` | Number of retry attempts (only applied when retry is enabled) |
-| `retryStrategy.shouldResetTimeout` | `_RETRY_SHOULD_RESET_TIMEOUT` | boolean | No | `true` | Reset timeout on each retry (only applied when retry is enabled) |
-| `retryStrategy.isExponential` | `_RETRY_IS_EXPONENTIAL` | boolean | No | `false` | Use exponential backoff between retries (only applied when retry is enabled) |
-| `retryStrategy.delay` | `_RETRY_DELAY` | number | No | `5000` | Base retry delay in ms (only applied when retry is enabled) |
-| `headers` | `_HEADERS` | JSON | No | `{}` | Additional headers sent with every request (JSON string) |
+| Key | Env Var suffix | Description | Type | Required | Default |
+|-----|----------------|-------------|------|----------|---------|
+| `url` | `_URL` | Base URL of the service | string | Yes | — |
+| `timeout` | `_TIMEOUT` | Request timeout in ms | number | No | `5000` |
+| `enableRetryStrategy` | `_ENABLE_RETRY_STRATEGY` | Enable automatic request retries | boolean | No | `false` |
+| `retryStrategy.retries` | `_RETRY_RETRIES` | Number of retry attempts (only applied when retry is enabled) | number | No | `3` |
+| `retryStrategy.shouldResetTimeout` | `_RETRY_SHOULD_RESET_TIMEOUT` | Reset timeout on each retry (only applied when retry is enabled) | boolean | No | `true` |
+| `retryStrategy.isExponential` | `_RETRY_IS_EXPONENTIAL` | Use exponential backoff between retries (only applied when retry is enabled) | boolean | No | `false` |
+| `retryStrategy.delay` | `_RETRY_DELAY` | Base retry delay in ms (only applied when retry is enabled) | number | No | `5000` |
+| `headers` | `_HEADERS` | Additional headers sent with every request (JSON object string) | JSON | No | `{}` |
 
 ### Auth Options *(optional, `osmApi` only)*
 
-| Key | Env Var | Type | Required | Default | Description |
-|-----|---------|------|----------|---------|-------------|
-| `auth.type` | `APP_CLIENTS_OSM_API_AUTH_TYPE` | string | No | — | Auth type (`basic`, `oauth1`, or `oauth2`) |
-| `auth.username` | `APP_CLIENTS_OSM_API_AUTH_USERNAME` | string | No | — | Username (basic auth only) |
-| `auth.password` | `APP_CLIENTS_OSM_API_AUTH_PASSWORD` | string | No | — | Password (basic auth only) |
-| `auth.accessToken` | `APP_CLIENTS_OSM_API_AUTH_ACCESS_TOKEN` | string | No | — | Access token (oauth1 and oauth2) |
-| `auth.consumerKey` | `APP_CLIENTS_OSM_API_AUTH_CONSUMER_KEY` | string | No | — | Consumer key (oauth1 only) |
-| `auth.consumerSecret` | `APP_CLIENTS_OSM_API_AUTH_CONSUMER_SECRET` | string | No | — | Consumer secret (oauth1 only) |
-| `auth.accessTokenSecret` | `APP_CLIENTS_OSM_API_AUTH_ACCESS_TOKEN_SECRET` | string | No | — | Access token secret (oauth1 only) |
+| Key | Env Var | Description | Type | Required | Default |
+|-----|---------|-------------|------|----------|---------|
+| `auth.type` | `APP_CLIENTS_OSM_API_AUTH_TYPE` | Auth type (`basic`, `oauth1`, or `oauth2`) | string | No | — |
+| `auth.username` | `APP_CLIENTS_OSM_API_AUTH_USERNAME` | Username (basic auth only) | string | No | — |
+| `auth.password` | `APP_CLIENTS_OSM_API_AUTH_PASSWORD` | Password (basic auth only) | string | No | — |
+| `auth.accessToken` | `APP_CLIENTS_OSM_API_AUTH_ACCESS_TOKEN` | Access token (oauth1 and oauth2) | string | No | — |
+| `auth.consumerKey` | `APP_CLIENTS_OSM_API_AUTH_CONSUMER_KEY` | Consumer key (oauth1 only) | string | No | — |
+| `auth.consumerSecret` | `APP_CLIENTS_OSM_API_AUTH_CONSUMER_SECRET` | Consumer secret (oauth1 only) | string | No | — |
+| `auth.accessTokenSecret` | `APP_CLIENTS_OSM_API_AUTH_ACCESS_TOKEN_SECRET` | Access token secret (oauth1 only) | string | No | — |
 
 ---
 
 ## Redis
 
-| Key | Env Var | Type | Required | Default | Description |
-|-----|---------|------|----------|---------|-------------|
-| `redis.host` | `REDIS_HOST` | string | Yes | `localhost` | Redis host |
-| `redis.port` | `REDIS_PORT` | number | No | `6379` | Redis port |
-| `redis.username` | `REDIS_USERNAME` | string | No | `""` | Redis username |
-| `redis.password` | `REDIS_PASSWORD` | string | No | `""` | Redis password *(secret)* |
-| `redis.db` | `REDIS_DB` | number | No | `0` | Redis database index |
-| `redis.keyPrefix` | `REDIS_KEY_PREFIX` | string | No | — | Key prefix for all Redis keys |
-| `redis.enableSslAuth` | `REDIS_ENABLE_SSL_AUTH` | boolean | No | `false` | Enable SSL/TLS authentication *(secret)* |
-| `redis.sslPaths.ca` | `REDIS_CA_PATH` | string | No | — | Path to CA certificate *(secret, only when SSL enabled)* |
-| `redis.sslPaths.key` | `REDIS_KEY_PATH` | string | No | — | Path to client key *(secret, only when SSL enabled)* |
-| `redis.sslPaths.cert` | `REDIS_CERT_PATH` | string | No | — | Path to client certificate *(secret, only when SSL enabled)* |
+| Key | Env Var | Description | Type | Required | Default |
+|-----|---------|-------------|------|----------|---------|
+| `redis.host` | `REDIS_HOST` | Redis host | string | Yes | `localhost` |
+| `redis.port` | `REDIS_PORT` | Redis port | number | No | `6379` |
+| `redis.username` | `REDIS_USERNAME` | Redis username | string | No | `""` |
+| `redis.password` | `REDIS_PASSWORD` | Redis password | string | No | `""` |
+| `redis.db` | `REDIS_DB` | Redis database index | number | No | `0` |
+| `redis.keyPrefix` | `REDIS_KEY_PREFIX` | Key prefix for all Redis keys | string | No | — |
+| `redis.enableSslAuth` | `REDIS_ENABLE_SSL_AUTH` | Enable SSL/TLS authentication | boolean | No | `false` |
+| `redis.sslPaths.ca` | `REDIS_CA_PATH` | Path to CA certificate *(only when SSL enabled)* | string | No | — |
+| `redis.sslPaths.key` | `REDIS_KEY_PATH` | Path to client key *(only when SSL enabled)* | string | No | — |
+| `redis.sslPaths.cert` | `REDIS_CERT_PATH` | Path to client certificate *(only when SSL enabled)* | string | No | — |
 
 ---
 
 ## BullMQ
 
-| Key | Env Var | Type | Required | Default | Description |
-|-----|---------|------|----------|---------|-------------|
-| `bullmq.host` | `BULLMQ_HOST` | string | Yes | `localhost` | BullMQ Redis host |
-| `bullmq.port` | `BULLMQ_PORT` | number | No | `6379` | BullMQ Redis port |
-| `bullmq.username` | `BULLMQ_USERNAME` | string | No | `""` | BullMQ Redis username |
-| `bullmq.password` | `BULLMQ_PASSWORD` | string | No | `""` | BullMQ Redis password *(secret)* |
-| `bullmq.db` | `BULLMQ_DB` | number | No | `0` | BullMQ Redis database index |
-| `bullmq.keyPrefix` | `BULLMQ_KEY_PREFIX` | string | No | `{naephi}` | Key prefix for all BullMQ keys |
-| `bullmq.enableSslAuth` | `BULLMQ_ENABLE_SSL_AUTH` | boolean | No | `false` | Enable SSL/TLS authentication *(secret)* |
-| `bullmq.sslPaths.ca` | `BULLMQ_CA_PATH` | string | No | — | Path to CA certificate *(secret, only when SSL enabled)* |
-| `bullmq.sslPaths.key` | `BULLMQ_KEY_PATH` | string | No | — | Path to client key *(secret, only when SSL enabled)* |
-| `bullmq.sslPaths.cert` | `BULLMQ_CERT_PATH` | string | No | — | Path to client certificate *(secret, only when SSL enabled)* |
+| Key | Env Var | Description | Type | Required | Default |
+|-----|---------|-------------|------|----------|---------|
+| `bullmq.host` | `BULLMQ_HOST` | BullMQ Redis host | string | Yes | `localhost` |
+| `bullmq.port` | `BULLMQ_PORT` | BullMQ Redis port | number | No | `6379` |
+| `bullmq.username` | `BULLMQ_USERNAME` | BullMQ Redis username | string | No | `""` |
+| `bullmq.password` | `BULLMQ_PASSWORD` | BullMQ Redis password | string | No | `""` |
+| `bullmq.db` | `BULLMQ_DB` | BullMQ Redis database index | number | No | `0` |
+| `bullmq.keyPrefix` | `BULLMQ_KEY_PREFIX` | Key prefix for all BullMQ keys | string | No | `{naephi}` |
+| `bullmq.enableSslAuth` | `BULLMQ_ENABLE_SSL_AUTH` | Enable SSL/TLS authentication | boolean | No | `false` |
+| `bullmq.sslPaths.ca` | `BULLMQ_CA_PATH` | Path to CA certificate *(only when SSL enabled)* | string | No | — |
+| `bullmq.sslPaths.key` | `BULLMQ_KEY_PATH` | Path to client key *(only when SSL enabled)* | string | No | — |
+| `bullmq.sslPaths.cert` | `BULLMQ_CERT_PATH` | Path to client certificate *(only when SSL enabled)* | string | No | — |
 
 ---
 

@@ -3,9 +3,11 @@
     "filePath": "OPENAPI_FILE_PATH"
   },
   "telemetry": {
-    "serviceName": "TELEMETRY_SERVICE_NAME",
-    "hostname": "TELEMETRY_HOST_NAME",
-    "version": "TELEMETRY_SERVICE_VERSION",
+    "metrics": {
+      "enabled": "TELEMETRY_METRICS_ENABLED",
+      "url": "TELEMETRY_METRICS_URL",
+      "interval": "TELEMETRY_METRICS_INTERVAL"
+    },
     "logger": {
       "level": "LOG_LEVEL",
       "prettyPrint": {
@@ -13,14 +15,14 @@
         "__format": "boolean"
       }
     },
-    "tracing": {
-      "enabled": "TELEMETRY_TRACING_ENABLED",
-      "url": "TELEMETRY_TRACING_URL"
+    "shared": {
+      "serviceName": "TELEMETRY_SERVICE_NAME",
+      "serviceVersion": "TELEMETRY_SERVICE_VERSION",
+      "hostname": "TELEMETRY_HOST_NAME"
     },
-    "metrics": {
-      "enabled": "TELEMETRY_METRICS_ENABLED",
-      "url": "TELEMETRY_METRICS_URL",
-      "interval": "TELEMETRY_METRICS_INTERVAL"
+    "tracing": {
+      "isEnabled": "TELEMETRY_TRACING_ENABLED",
+      "url": "TELEMETRY_TRACING_URL"
     }
   },
   "server": {
