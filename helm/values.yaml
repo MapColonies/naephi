@@ -242,7 +242,7 @@ env:
           # shouldResetTimeout: false
           # isExponential: false
           # delay: 100
-        headers: '{"Key":"Value"}'
+        headers: '{}'
         # auth:
         #   type: oauth2
         #   accessToken: ""
