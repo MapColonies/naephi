@@ -11,8 +11,8 @@ import { collectMetricsExpressMiddleware } from '@map-colonies/prometheus';
 import { Registry } from 'prom-client';
 import type { ConfigType } from '@common/config';
 import { SERVICES } from '@common/constants';
-import { RESOURCE_NAME_ROUTER_SYMBOL } from './resourceName/routes/resourceNameRouter';
-import { ANOTHER_RESOURCE_ROUTER_SYMBOL } from './anotherResource/routes/anotherResourceRouter';
+import { FLOW_ROUTER_SYMBOL } from './flow/routes/flowRouter';
+import { BullBoard } from './queueProvider/ui/bullBoard';
 
 @injectable()
 export class ServerBuilder {
@@ -22,8 +22,8 @@ export class ServerBuilder {
     @inject(SERVICES.CONFIG) private readonly config: ConfigType,
     @inject(SERVICES.LOGGER) private readonly logger: Logger,
     @inject(SERVICES.METRICS) private readonly metricsRegistry: Registry,
-    @inject(RESOURCE_NAME_ROUTER_SYMBOL) private readonly resourceNameRouter: Router,
-    @inject(ANOTHER_RESOURCE_ROUTER_SYMBOL) private readonly anotherResourceRouter: Router
+    @inject(FLOW_ROUTER_SYMBOL) private readonly flowRouter: Router,
+    @inject(BullBoard) private readonly bullBoard: BullBoard
   ) {
     this.serverInstance = express();
   }
@@ -46,8 +46,7 @@ export class ServerBuilder {
   }
 
   private buildRoutes(): void {
-    this.serverInstance.use('/resourceName', this.resourceNameRouter);
-    this.serverInstance.use('/anotherResource', this.anotherResourceRouter);
+    this.serverInstance.use('/flow', this.flowRouter);
     this.buildDocsRoutes();
   }
 
@@ -60,6 +59,9 @@ export class ServerBuilder {
     }
 
     this.serverInstance.use(bodyParser.json(this.config.get('server.request.payload')));
+
+    /* eslint-disable-next-line @typescript-eslint/no-unsafe-argument */ // bull-board types are insufficient
+    this.serverInstance.use(this.config.get('app.uiPath') as string, this.bullBoard.getBullBoardRouter());
 
     const ignorePathRegex = new RegExp(`^${this.config.get('openapiConfig.basePath')}/.*`, 'i');
     const apiSpecPath = this.config.get('openapiConfig.filePath');

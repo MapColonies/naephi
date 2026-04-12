@@ -1,47 +1,234 @@
+import { DependencyContainer, instancePerContainerCachingFactory, Lifecycle, predicateAwareClassFactory } from 'tsyringe';
 import { getOtelMixin } from '@map-colonies/tracing-utils';
 import { trace } from '@opentelemetry/api';
+import ioRedis from 'ioredis';
 import { Registry } from 'prom-client';
-import { DependencyContainer } from 'tsyringe/dist/typings/types';
-import { jsLogger } from '@map-colonies/js-logger';
-import { InjectionObject, registerDependencies } from '@common/dependencyRegistration';
-import { SERVICES, SERVICE_NAME } from '@common/constants';
+import { HealthCheck } from '@godaddy/terminus';
+import { jsLogger, Logger } from '@map-colonies/js-logger';
+import { CleanupRegistry } from '@map-colonies/cleanup-registry';
+import { InjectionObject, registerDependencies, RegisterOptions } from '@common/dependencyRegistration';
+import { HEALTHCHECK, ON_SIGNAL, SERVICES, SERVICE_NAME } from '@common/constants';
 import { getTracing } from '@common/tracing';
-import { resourceNameRouterFactory, RESOURCE_NAME_ROUTER_SYMBOL } from './resourceName/routes/resourceNameRouter';
-import { anotherResourceRouterFactory, ANOTHER_RESOURCE_ROUTER_SYMBOL } from './anotherResource/routes/anotherResourceRouter';
-import { getConfig } from './common/config';
+import { FLOW_ROUTER_SYMBOL, flowRouterFactory } from './flow/routes/flowRouter';
+import { ConfigType, getConfig } from './common/config';
+import {
+  BULLMQ_FLOW_PRODUCER_SYMBOL,
+  QueueEnum,
+  BULLMQ_CONNECTION_OPTIONS_SYMBOL,
+  WorkerEnum,
+  BULLMQ_WORKERS_INITIALIZER,
+} from './queueProvider/constants';
+import { bullFlowProviderFactory, bullQueueProviderFactory, bullWorkerPostInjectionHookFactory } from './queueProvider/queues/factories';
+import { BullQueueProvider } from './queueProvider/queues/bullQueueProvider';
+import {
+  createBullMqConnectionOptionsFactory,
+  createReusableRedisQueueConnectionFactory,
+  createReusableRedisWorkerConnectionFactory,
+} from './queueProvider/connection';
+import { BullFlowProducerProvider } from './queueProvider/queues/bullFlowProducerProvider';
+import { IOsmIdResolver } from './osmIdResolver/interfaces';
+import { TrackerOsmIdResolver } from './osmIdResolver/trackerOsmIdResolver';
+import { ChildJobOsmIdResolver } from './osmIdResolver/childJobOsmIdResolver';
+import { workerIdToClass } from './queueProvider/workers/upload';
+import { BullWorkerProvider } from './queueProvider/workers/bullWorkerProvider';
+import { createRedisFactory } from './redis/connection';
+import { CLIENTS } from './clients/constants';
+import { OsmApiClient } from './clients/osmAPI/client';
+import { ChangeMergerClient } from './clients/changeMerger/client';
+import { IdToOsmClient } from './clients/idToOsm/client';
+import { OsmSyncTrackerClient } from './clients/osmSyncTracker/client';
+import { IRedisClient } from './redis/interfaces';
+import { RedisClient } from './redis/client';
 
-export interface RegisterOptions {
-  override?: InjectionObject<unknown>[];
-  useChild?: boolean;
-}
+const registerBullDeps = (): InjectionObject<unknown>[] => {
+  const queueProvidersDeps: InjectionObject<unknown>[] = Object.values(QueueEnum).map((queueName) => ({
+    token: queueName,
+    provider: {
+      useFactory: instancePerContainerCachingFactory(bullQueueProviderFactory(queueName)),
+    },
+    postInjectionHook: (container: DependencyContainer): void => {
+      const queue = container.resolve<BullQueueProvider>(queueName);
+      const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+      cleanupRegistry.register({ id: queueName, func: queue.close.bind(queue) });
+    },
+  }));
 
-export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
-  const configInstance = getConfig();
+  const workerProvidersDeps: InjectionObject<unknown>[] = Object.values(WorkerEnum).map((workerId) => ({
+    token: workerId,
+    provider: { useClass: workerIdToClass(workerId) },
+    options: { lifecycle: Lifecycle.ContainerScoped },
+    postInjectionHook: bullWorkerPostInjectionHookFactory(workerId),
+  }));
 
-  const loggerConfig = configInstance.get('telemetry.logger');
-
-  const logger = jsLogger({ ...loggerConfig, prettyPrint: loggerConfig.prettyPrint, mixin: getOtelMixin() });
-
-  const tracer = trace.getTracer(SERVICE_NAME);
-  const metricsRegistry = new Registry();
-  configInstance.initializeMetrics(metricsRegistry);
-
-  const dependencies: InjectionObject<unknown>[] = [
-    { token: SERVICES.CONFIG, provider: { useValue: configInstance } },
-    { token: SERVICES.LOGGER, provider: { useValue: logger } },
-    { token: SERVICES.TRACER, provider: { useValue: tracer } },
-    { token: SERVICES.METRICS, provider: { useValue: metricsRegistry } },
-    { token: RESOURCE_NAME_ROUTER_SYMBOL, provider: { useFactory: resourceNameRouterFactory } },
-    { token: ANOTHER_RESOURCE_ROUTER_SYMBOL, provider: { useFactory: anotherResourceRouterFactory } },
+  const bullDependencies: InjectionObject<unknown>[] = [
+    { token: BULLMQ_CONNECTION_OPTIONS_SYMBOL, provider: { useFactory: instancePerContainerCachingFactory(createBullMqConnectionOptionsFactory) } },
     {
-      token: 'onSignal',
+      token: SERVICES.BULLMQ_WORKER_CONNECTION,
+      provider: { useFactory: instancePerContainerCachingFactory(createReusableRedisWorkerConnectionFactory) },
+    },
+    {
+      token: SERVICES.BULLMQ_QUEUE_CONNECTION,
+      provider: { useFactory: instancePerContainerCachingFactory(createReusableRedisQueueConnectionFactory) },
+    },
+    {
+      token: BULLMQ_FLOW_PRODUCER_SYMBOL,
       provider: {
-        useValue: async (): Promise<void> => {
-          await Promise.all([getTracing().stop()]);
+        useFactory: instancePerContainerCachingFactory(bullFlowProviderFactory),
+      },
+      postInjectionHook: (container: DependencyContainer): void => {
+        const flowProducer = container.resolve<BullFlowProducerProvider>(BULLMQ_FLOW_PRODUCER_SYMBOL);
+        const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+        cleanupRegistry.register({ id: BULLMQ_FLOW_PRODUCER_SYMBOL, func: flowProducer.close.bind(flowProducer) });
+      },
+    },
+    ...queueProvidersDeps,
+    ...workerProvidersDeps,
+    {
+      token: BULLMQ_WORKERS_INITIALIZER,
+      provider: {
+        useFactory: (container): (() => Promise<void>) => {
+          const promises = Object.values(WorkerEnum).map(async (workerName) => {
+            const worker = container.resolve<BullWorkerProvider>(workerName);
+            await worker.start();
+          });
+
+          return async (): Promise<void> => {
+            await Promise.all(promises);
+          };
         },
       },
     },
   ];
 
-  return Promise.resolve(registerDependencies(dependencies, options?.override, options?.useChild));
+  return bullDependencies;
+};
+
+export const registerExternalValues = async (options?: RegisterOptions): Promise<DependencyContainer> => {
+  let container: DependencyContainer | undefined;
+
+  try {
+    const dependencies: InjectionObject<unknown>[] = [
+      { token: SERVICES.CONFIG, provider: { useValue: getConfig() } },
+      {
+        token: SERVICES.CLEANUP_REGISTRY,
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const logger = container.resolve<Logger>(SERVICES.LOGGER);
+            const cleanupRegistryLogger = logger.child({ subComponent: 'cleanupRegistry' });
+            const cleanupRegistry = new CleanupRegistry({ logger: cleanupRegistryLogger });
+            return cleanupRegistry;
+          }),
+        },
+      },
+      {
+        token: SERVICES.LOGGER,
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            const loggerConfig = config.get('telemetry.logger');
+            const logger = jsLogger({ ...loggerConfig, mixin: getOtelMixin() });
+            return logger;
+          }),
+        },
+      },
+      {
+        token: SERVICES.TRACER,
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+            cleanupRegistry.register({ id: SERVICES.TRACER, func: getTracing().stop.bind(getTracing()) });
+            const tracer = trace.getTracer(SERVICE_NAME);
+            return tracer;
+          }),
+        },
+      },
+      {
+        token: SERVICES.METRICS,
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const metricsRegistry = new Registry();
+            const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+            config.initializeMetrics(metricsRegistry);
+            return metricsRegistry;
+          }),
+        },
+      },
+      {
+        token: SERVICES.REDIS,
+        provider: {
+          useFactory: instancePerContainerCachingFactory(createRedisFactory),
+        },
+      },
+      {
+        token: SERVICES.REDIS_CLIENT,
+        provider: { useClass: RedisClient },
+        options: { lifecycle: Lifecycle.Singleton },
+      },
+      {
+        token: CLIENTS.OSM_API,
+        provider: { useClass: OsmApiClient },
+        options: { lifecycle: Lifecycle.Singleton },
+      },
+      {
+        token: CLIENTS.CHANGE_MERGER,
+        provider: { useClass: ChangeMergerClient },
+        options: { lifecycle: Lifecycle.Singleton },
+      },
+      {
+        token: CLIENTS.ID_TO_OSM,
+        provider: { useClass: IdToOsmClient },
+        options: { lifecycle: Lifecycle.Singleton },
+      },
+      {
+        token: CLIENTS.OSM_SYNC_TRACKER,
+        provider: { useClass: OsmSyncTrackerClient },
+        options: { lifecycle: Lifecycle.Singleton },
+      },
+      {
+        token: SERVICES.OSM_ID_RESOLVER,
+        provider: {
+          useFactory: predicateAwareClassFactory<IOsmIdResolver>(
+            (container) => {
+              const config = container.resolve<ConfigType>(SERVICES.CONFIG);
+              const resolver = config.get('app.osmIdResolver')!;
+              return resolver === 'tracker';
+            },
+            TrackerOsmIdResolver,
+            ChildJobOsmIdResolver
+          ),
+        },
+      },
+      { token: FLOW_ROUTER_SYMBOL, provider: { useFactory: flowRouterFactory } },
+      {
+        token: HEALTHCHECK,
+        provider: {
+          useFactory: (container): HealthCheck => {
+            const bullMq = container.resolve<ioRedis>(SERVICES.BULLMQ_QUEUE_CONNECTION);
+            const redisClient = container.resolve<IRedisClient>(SERVICES.REDIS_CLIENT);
+            return async (): Promise<void> => {
+              await Promise.all([bullMq.ping(), redisClient.ping()]);
+            };
+          },
+        },
+      },
+      {
+        token: ON_SIGNAL,
+        provider: {
+          useFactory: instancePerContainerCachingFactory((container) => {
+            const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+            return cleanupRegistry.trigger.bind(cleanupRegistry);
+          }),
+        },
+      },
+      ...registerBullDeps(),
+    ];
+    container = await registerDependencies(dependencies, options?.override, options?.useChild);
+    return container;
+  } catch (error) {
+    if (container?.isRegistered(SERVICES.CLEANUP_REGISTRY) === true) {
+      const cleanupRegistry = container.resolve<CleanupRegistry>(SERVICES.CLEANUP_REGISTRY);
+      await cleanupRegistry.trigger();
+    }
+    throw error;
+  }
 };

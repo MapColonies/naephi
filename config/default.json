@@ -29,5 +29,268 @@
         "options": null
       }
     }
+  },
+  "app": {
+    "uiPath": "/ui",
+    "initTimeout": 30000,
+    "osmIdResolver": "tracker",
+    "flows": {
+      "changesetUpload": {
+        "maxAttempts": 10
+      }
+    },
+    "queues": {
+      "changesetPreUpload": {
+        "jobOptions": {
+          "attempts": 10,
+          "delay": 0,
+          "backoff": {
+            "type": "fixed",
+            "delay": 5000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "lockDuration": 30000,
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600
+          },
+          "removeOnFail": {
+            "age": 86400
+          }
+        }
+      },
+      "changesetUpload": {
+        "jobOptions": {
+          "attempts": 10,
+          "delay": 0,
+          "backoff": {
+            "type": "fixed",
+            "delay": 3600000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "lockDuration": 30000,
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600
+          },
+          "removeOnFail": {
+            "age": 86400
+          }
+        }
+      },
+      "changesetPostUpload": {
+        "jobOptions": {
+          "attempts": 10,
+          "delay": 0,
+          "backoff": {
+            "type": "fixed",
+            "delay": 5000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "lockDuration": 30000,
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600
+          },
+          "removeOnFail": {
+            "age": 86400
+          }
+        }
+      },
+      "changesetClosure": {
+        "jobOptions": {
+          "attempts": 10,
+          "delay": 0,
+          "backoff": {
+            "type": "fixed",
+            "delay": 5000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "lockDuration": 30000,
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600
+          },
+          "removeOnFail": {
+            "age": 86400
+          }
+        },
+        "batchOptions": {
+          "size": 10,
+          "minSize": 1,
+          "timeout": 5000,
+          "lockDuration": 30000
+        }
+      },
+      "changesetRedisCleanup": {
+        "jobOptions": {
+          "attempts": 10,
+          "delay": 0,
+          "backoff": {
+            "type": "fixed",
+            "delay": 5000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "lockDuration": 30000,
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600
+          },
+          "removeOnFail": {
+            "age": 86400
+          }
+        },
+        "batchOptions": {
+          "size": 10,
+          "minSize": 1,
+          "timeout": 5000,
+          "lockDuration": 30000
+        }
+      },
+      "changesetOsmCleanup": {
+        "jobOptions": {
+          "attempts": 10,
+          "delay": 0,
+          "backoff": {
+            "type": "fixed",
+            "delay": 5000
+          }
+        },
+        "workerOptions": {
+          "concurrency": 1,
+          "limiter": {
+            "max": 100,
+            "duration": 1000
+          },
+          "lockDuration": 30000,
+          "maxStalledCount": 1,
+          "stalledInterval": 30000,
+          "removeOnComplete": {
+            "age": 3600
+          },
+          "removeOnFail": {
+            "age": 86400
+          }
+        },
+        "batchOptions": {
+          "size": 10,
+          "minSize": 1,
+          "timeout": 5000,
+          "lockDuration": 30000
+        }
+      }
+    },
+    "clients": {
+      "osmApi": {
+        "url": "http://localhost:3000",
+        "timeout": 5000,
+        "enableRetryStrategy": false,
+        "retryStrategy": {
+          "retries": 3,
+          "shouldResetTimeout": true,
+          "isExponential": false,
+          "delay": 5000
+        },
+        "headers": {}
+      },
+      "osmSyncTracker": {
+        "url": "http://localhost:3001",
+        "timeout": 5000,
+        "enableRetryStrategy": false,
+        "retryStrategy": {
+          "retries": 3,
+          "shouldResetTimeout": true,
+          "isExponential": false,
+          "delay": 5000
+        },
+        "headers": {}
+      },
+      "changeMerger": {
+        "url": "http://localhost:3002",
+        "timeout": 5000,
+        "enableRetryStrategy": false,
+        "retryStrategy": {
+          "retries": 3,
+          "shouldResetTimeout": true,
+          "isExponential": false,
+          "delay": 5000
+        },
+        "headers": {}
+      },
+      "idToOsm": {
+        "url": "http://localhost:3003",
+        "timeout": 5000,
+        "enableRetryStrategy": false,
+        "retryStrategy": {
+          "retries": 3,
+          "shouldResetTimeout": true,
+          "isExponential": false,
+          "delay": 5000
+        },
+        "headers": {}
+      }
+    }
+  },
+  "redis": {
+    "host": "localhost",
+    "port": 6379,
+    "username": "",
+    "password": "",
+    "enableSslAuth": false,
+    "sslPaths": {
+      "ca": "",
+      "key": "",
+      "cert": ""
+    },
+    "db": 0
+  },
+  "bullmq": {
+    "host": "localhost",
+    "port": 6379,
+    "username": "",
+    "password": "",
+    "enableSslAuth": false,
+    "sslPaths": {
+      "ca": "",
+      "key": "",
+      "cert": ""
+    },
+    "db": 0,
+    "keyPrefix": "{naephi}"
   }
 }
