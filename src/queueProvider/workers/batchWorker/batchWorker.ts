@@ -179,6 +179,14 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
       ...this.getBatchMetadata(),
     });
 
+    // inject worker-level removeOnComplete/removeOnFail onto job opts as fallback
+    // since BatchWorker uses promise-based processing, BullMQ won't apply workerOptions
+    // removeOnComplete/removeOnFail automatically — we need to forward them manually
+    batch.forEach(({ job }) => {
+      job.opts.removeOnComplete = job.opts.removeOnComplete ?? this.opts.removeOnComplete;
+      job.opts.removeOnFail = job.opts.removeOnFail ?? this.opts.removeOnFail;
+    });
+
     const flushStart = Date.now();
 
     try {
@@ -191,6 +199,7 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
           msg: 'resolving job as completed',
           trigger,
           jobId: bufferedJob.job.id,
+          jobOptions: bufferedJob.job.opts,
           batchSize: batch.length,
           ...this.getBatchMetadata(),
         });
@@ -212,6 +221,7 @@ export class BatchWorker<DataType = unknown, NameType extends string = string> e
           msg: 'rejecting job as failed',
           trigger,
           jobId: bufferedJob.job.id,
+          jobOptions: bufferedJob.job.opts,
           batchSize: batch.length,
           ...this.getBatchMetadata(),
         });

@@ -11,7 +11,12 @@ export abstract class BullBatchWorkerProvider<DataType = unknown> extends BullWo
 
   public constructor(options: BatchWorkerProviderOptions) {
     super(options);
-    this.workerOptions = options;
+    this.workerOptions = {
+      ...options.workerOptions,
+      batch: options.batch,
+      logger: options.logger,
+      metricsRegistry: options.metricsRegistry,
+    };
   }
 
   protected override createWorker(): void {
